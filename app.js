@@ -20,7 +20,7 @@ import {
 /* ---------------------------------------------------------------------
    CONFIG — edit these two things for your real store.
 --------------------------------------------------------------------- */
-const ADMIN_EMAILS = ['kokomina946@gmail.com', 'patrick.kimo2010@gmail.com'];
+const ADMIN_EMAILS = ['kokomina946@gmail.com', 'patrick.kimo2010@gmail.com', 'yassaking687@gmail.com'];
 
 const DEFAULT_PRODUCTS = [
   { id: 'p1', price: 1450, imageUrl: '', videoUrl: '', name: { en: 'Cedar desk lamp', ar: 'مصباح مكتب خشب الأرز' }, desc: { en: 'Warm brass fitting, adjustable arm.', ar: 'تركيب نحاسي دافئ، ذراع قابل للتعديل.' } },

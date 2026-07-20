@@ -140,15 +140,26 @@ const STRINGS = {
 --------------------------------------------------------------------- */
 const DB = {
   async getProducts() {
-    const snap = await getDocs(collection(db, 'products'));
-    if (snap.empty) {
-      for (const p of DEFAULT_PRODUCTS) {
-        const { id, ...data } = p;
-        await setDoc(doc(db, 'products', id), data);
+    try {
+      const snap = await getDocs(collection(db, 'products'));
+      if (!snap.empty) return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Collection is empty — try to seed the starter products. This only
+      // succeeds if the current visitor is an admin (see Firestore rules);
+      // if it fails (e.g. a regular customer got here first), that's fine —
+      // we still show the starter list locally so the shop is never blank.
+      try {
+        for (const p of DEFAULT_PRODUCTS) {
+          const { id, ...data } = p;
+          await setDoc(doc(db, 'products', id), data);
+        }
+      } catch (seedErr) {
+        console.warn('Could not seed starter products (needs an admin to load the site once):', seedErr);
       }
       return DEFAULT_PRODUCTS;
+    } catch (readErr) {
+      console.error('Could not load products from Firestore:', readErr);
+      return DEFAULT_PRODUCTS;
     }
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   },
   async addProduct(product) {
     const { id, ...data } = product;
@@ -673,7 +684,9 @@ function logout() {
 // Fires on page load (restoring a session) and on every sign-in/out.
 onAuthStateChanged(auth, async (fbUser) => {
   if (fbUser) {
-    const profile = await DB.getUserProfile(fbUser.uid);
+    let profile = null;
+    try { profile = await DB.getUserProfile(fbUser.uid); }
+    catch (e) { console.warn('Could not load user profile:', e); }
     state.currentUser = {
       uid: fbUser.uid,
       name: (profile && profile.name) || fbUser.displayName || fbUser.email,
@@ -780,7 +793,8 @@ document.addEventListener('click', async (e) => {
     }
     case 'nav-myorders':
       document.getElementById('account-menu').hidden = true;
-      state.orders = await DB.getOrdersByBuyer(state.currentUser.email);
+      try { state.orders = await DB.getOrdersByBuyer(state.currentUser.email); }
+      catch (err) { console.error('Could not load your orders:', err); state.orders = []; }
       state.view = 'myorders';
       renderApp();
       break;
@@ -788,7 +802,8 @@ document.addEventListener('click', async (e) => {
       document.getElementById('account-menu').hidden = true;
       state.view = 'admin';
       state.adminTab = 'orders';
-      state.orders = await DB.getAllOrders();
+      try { state.orders = await DB.getAllOrders(); }
+      catch (err) { console.error('Could not load orders:', err); state.orders = []; }
       renderApp();
       break;
     case 'logout':

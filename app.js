@@ -1,12 +1,21 @@
 /* =====================================================================
    BUY — a bilingual (EN/AR) product ordering site with accounts and an
-   admin panel, built with plain HTML/CSS/JS. No build step required.
+   admin panel, built with plain HTML/CSS/JS + Firebase.
 
-   DATA: stored in the browser's localStorage. That means it works the
-   instant you open this page — no signup, no server — but each
-   device/browser keeps its own separate copy of orders/products/users.
-   See README.md for how to upgrade to shared, cross-device storage.
+   DATA: Firebase Authentication (real, secure login) + Firestore
+   (shared database — every device/browser sees the same products,
+   orders, and accounts). See README.md for the security rules to
+   paste into your Firebase console.
    ===================================================================== */
+
+import { auth, db } from './firebase-config.js';
+import {
+  createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
+  onAuthStateChanged, updateProfile,
+} from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js';
+import {
+  collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, where, orderBy,
+} from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js';
 
 /* ---------------------------------------------------------------------
    CONFIG — edit these two things for your real store.
@@ -125,31 +134,52 @@ const STRINGS = {
 };
 
 /* ---------------------------------------------------------------------
-   STORAGE (localStorage-backed, JSON)
+   DATABASE (Firestore-backed)
+   Each product/order is its own document — never one big blob — so two
+   people writing at the same time can't clobber each other's data.
 --------------------------------------------------------------------- */
 const DB = {
-  read(key, fallback) {
-    try {
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
-    } catch (e) { return fallback; }
+  async getProducts() {
+    const snap = await getDocs(collection(db, 'products'));
+    if (snap.empty) {
+      for (const p of DEFAULT_PRODUCTS) {
+        const { id, ...data } = p;
+        await setDoc(doc(db, 'products', id), data);
+      }
+      return DEFAULT_PRODUCTS;
+    }
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   },
-  write(key, value) {
-    try { localStorage.setItem(key, JSON.stringify(value)); return true; }
-    catch (e) { return false; }
+  async addProduct(product) {
+    const { id, ...data } = product;
+    await setDoc(doc(db, 'products', id), data);
+    return product;
   },
-  getProducts() {
-    let p = DB.read('buy_products', null);
-    if (!p) { p = DEFAULT_PRODUCTS; DB.write('buy_products', p); }
-    return p;
+  async removeProduct(id) {
+    await deleteDoc(doc(db, 'products', id));
   },
-  setProducts(p) { DB.write('buy_products', p); },
-  getOrders() { return DB.read('buy_orders', []); },
-  setOrders(o) { DB.write('buy_orders', o); },
-  getUsers() { return DB.read('buy_users', []); },
-  setUsers(u) { DB.write('buy_users', u); },
-  getCurrentUserId() { return DB.read('buy_current_user', null); },
-  setCurrentUserId(id) { DB.write('buy_current_user', id); },
+  async getAllOrders() {
+    const q = query(collection(db, 'orders'), orderBy('timestamp', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  },
+  async getOrdersByBuyer(email) {
+    const q = query(collection(db, 'orders'), where('buyerEmail', '==', email), orderBy('timestamp', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  },
+  async addOrder(order) {
+    const { id, ...data } = order;
+    await setDoc(doc(db, 'orders', id), data);
+    return order;
+  },
+  async getUserProfile(uid) {
+    const snap = await getDoc(doc(db, 'users', uid));
+    return snap.exists() ? snap.data() : null;
+  },
+  async setUserProfile(uid, profile) {
+    await setDoc(doc(db, 'users', uid), profile);
+  },
 };
 
 /* ---------------------------------------------------------------------
@@ -161,7 +191,6 @@ const state = {
   adminTab: 'orders',
   products: [],
   orders: [],
-  users: [],
   currentUser: null,
 };
 
@@ -189,11 +218,6 @@ function makeId(prefix) { return prefix + Date.now().toString(36) + Math.random(
 function isValidEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
 function escapeHtml(str) {
   return String(str || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-async function hashPassword(pw) {
-  const enc = new TextEncoder().encode(pw);
-  const buf = await crypto.subtle.digest('SHA-256', enc);
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 function formatTime(iso) {
   return new Date(iso).toLocaleString(state.lang === 'ar' ? 'ar-EG' : 'en-GB', {
@@ -470,12 +494,13 @@ function handleGeolocate() {
   );
 }
 
-function submitOrder(product) {
+async function submitOrder(product) {
   const phone1 = document.getElementById('buy-phone1').value.trim();
   const phone2 = document.getElementById('buy-phone2').value.trim();
   const location = document.getElementById('buy-location').value.trim();
   const notes = Array.from(document.querySelectorAll('#buy-notes-list input')).map(i => i.value.trim()).filter(Boolean);
   const errEl = document.getElementById('buy-error');
+  const submitBtn = document.getElementById('buy-submit');
 
   if (!phone1 || !location) {
     errEl.textContent = t('required');
@@ -490,10 +515,20 @@ function submitOrder(product) {
     buyerEmail: state.currentUser ? state.currentUser.email : '',
     timestamp: new Date().toISOString(),
   };
-  state.orders = [order, ...state.orders];
-  DB.setOrders(state.orders);
-  closeBuyModal();
-  openSuccessModal(order);
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = t('submitting');
+  try {
+    await DB.addOrder(order);
+    state.orders = [order, ...state.orders];
+    closeBuyModal();
+    openSuccessModal(order);
+  } catch (e) {
+    errEl.textContent = t('required');
+    errEl.hidden = false;
+    submitBtn.disabled = false;
+    submitBtn.textContent = t('submit');
+  }
 }
 
 /* ---------------------------------------------------------------------
@@ -588,51 +623,73 @@ function openAuthModal(mode = 'login') {
       return;
     }
     closeAuthModal();
-    renderApp();
   }
 }
 function closeAuthModal() { document.getElementById('modal-root').innerHTML = ''; }
 
 /* ---------------------------------------------------------------------
-   AUTH LOGIC
+   AUTH LOGIC (real Firebase Authentication)
 --------------------------------------------------------------------- */
+function authErrorMessage(e) {
+  switch (e.code) {
+    case 'auth/email-already-in-use': return t('signup_error_exists');
+    case 'auth/weak-password': return t('password_required');
+    case 'auth/invalid-email': return t('email_required');
+    case 'auth/user-not-found': return t('login_error_missing');
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential': return t('wrong_password');
+    default: return e.message || t('required');
+  }
+}
+
 async function signup({ name, email, password, phone }) {
   if (!name || !email || !isValidEmail(email)) return { ok: false, error: t('name_email_required') };
   if (!password || password.length < 6) return { ok: false, error: t('password_required') };
-  if (state.users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
-    return { ok: false, error: t('signup_error_exists') };
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(cred.user, { displayName: name });
+    await DB.setUserProfile(cred.user.uid, { name, email, phone: phone || '', createdAt: new Date().toISOString() });
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: authErrorMessage(e) };
   }
-  const passwordHash = await hashPassword(password);
-  const user = { id: makeId('u'), name, email, phone: phone || '', passwordHash, createdAt: new Date().toISOString() };
-  state.users = [...state.users, user];
-  DB.setUsers(state.users);
-  state.currentUser = user;
-  DB.setCurrentUserId(user.id);
-  return { ok: true };
 }
 
 async function login({ email, password }) {
   if (!email || !isValidEmail(email)) return { ok: false, error: t('email_required') };
-  const match = state.users.find(u => u.email.toLowerCase() === email.toLowerCase());
-  if (!match) return { ok: false, error: t('login_error_missing') };
-  const enteredHash = await hashPassword(password || '');
-  if (enteredHash !== match.passwordHash) return { ok: false, error: t('wrong_password') };
-  state.currentUser = match;
-  DB.setCurrentUserId(match.id);
-  return { ok: true };
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: authErrorMessage(e) };
+  }
 }
 
 function logout() {
-  state.currentUser = null;
-  DB.setCurrentUserId(null);
+  signOut(auth);
   state.view = 'shop';
-  renderApp();
 }
+
+// Fires on page load (restoring a session) and on every sign-in/out.
+onAuthStateChanged(auth, async (fbUser) => {
+  if (fbUser) {
+    const profile = await DB.getUserProfile(fbUser.uid);
+    state.currentUser = {
+      uid: fbUser.uid,
+      name: (profile && profile.name) || fbUser.displayName || fbUser.email,
+      email: fbUser.email,
+      phone: (profile && profile.phone) || '',
+    };
+  } else {
+    state.currentUser = null;
+  }
+  renderApp();
+});
 
 /* ---------------------------------------------------------------------
    ADMIN ACTIONS
 --------------------------------------------------------------------- */
-function addProductFromForm() {
+async function addProductFromForm() {
   const nameEn = document.getElementById('np-name-en').value.trim();
   const nameAr = document.getElementById('np-name-ar').value.trim();
   const descEn = document.getElementById('np-desc-en').value.trim();
@@ -641,6 +698,7 @@ function addProductFromForm() {
   const imageUrl = document.getElementById('np-image').value.trim();
   const videoUrl = document.getElementById('np-video').value.trim();
   const errEl = document.getElementById('np-error');
+  const addBtn = document.querySelector('[data-action="add-product"]');
 
   if (!nameEn || !nameAr || !price || price <= 0) {
     errEl.textContent = t('product_fields_required');
@@ -648,10 +706,18 @@ function addProductFromForm() {
     return;
   }
   const product = { id: makeId('p'), price, imageUrl, videoUrl, name: { en: nameEn, ar: nameAr }, desc: { en: descEn, ar: descAr } };
-  state.products = [...state.products, product];
-  DB.setProducts(state.products);
-  document.getElementById('admin-tab-content').innerHTML = renderProductsTab();
-  wireProductsTabEvents();
+
+  if (addBtn) addBtn.disabled = true;
+  try {
+    await DB.addProduct(product);
+    state.products = [...state.products, product];
+    document.getElementById('admin-tab-content').innerHTML = renderProductsTab();
+    wireProductsTabEvents();
+  } catch (e) {
+    errEl.textContent = t('product_fields_required');
+    errEl.hidden = false;
+    if (addBtn) addBtn.disabled = false;
+  }
 }
 
 function askRemoveProduct(id) {
@@ -669,9 +735,9 @@ function askRemoveProduct(id) {
   });
 }
 
-function removeProduct(id) {
+async function removeProduct(id) {
+  await DB.removeProduct(id);
   state.products = state.products.filter(p => p.id !== id);
-  DB.setProducts(state.products);
   document.getElementById('admin-tab-content').innerHTML = renderProductsTab();
   wireProductsTabEvents();
 }
@@ -687,7 +753,7 @@ function wireProductsTabEvents() {
 /* ---------------------------------------------------------------------
    GLOBAL EVENT DELEGATION (for the main #app view)
 --------------------------------------------------------------------- */
-document.addEventListener('click', (e) => {
+document.addEventListener('click', async (e) => {
   const el = e.target.closest('[data-action]');
   if (!el) {
     const menu = document.getElementById('account-menu');
@@ -713,12 +779,16 @@ document.addEventListener('click', (e) => {
       break;
     }
     case 'nav-myorders':
+      document.getElementById('account-menu').hidden = true;
+      state.orders = await DB.getOrdersByBuyer(state.currentUser.email);
       state.view = 'myorders';
       renderApp();
       break;
     case 'nav-admin':
+      document.getElementById('account-menu').hidden = true;
       state.view = 'admin';
       state.adminTab = 'orders';
+      state.orders = await DB.getAllOrders();
       renderApp();
       break;
     case 'logout':
@@ -730,6 +800,7 @@ document.addEventListener('click', (e) => {
       break;
     case 'admin-tab':
       state.adminTab = el.dataset.tab;
+      if (state.adminTab === 'products') state.products = await DB.getProducts();
       document.getElementById('admin-tab-content').innerHTML = state.adminTab === 'orders' ? renderOrdersTab() : renderProductsTab();
       if (state.adminTab === 'products') wireProductsTabEvents();
       document.querySelectorAll('.tab-btn[data-action="admin-tab"]').forEach(b => b.classList.toggle('active', b.dataset.tab === state.adminTab));
@@ -742,12 +813,9 @@ document.addEventListener('click', (e) => {
 /* ---------------------------------------------------------------------
    INIT
 --------------------------------------------------------------------- */
-function init() {
-  state.products = DB.getProducts();
-  state.orders = DB.getOrders();
-  state.users = DB.getUsers();
-  const currentId = DB.getCurrentUserId();
-  if (currentId) state.currentUser = state.users.find(u => u.id === currentId) || null;
+async function init() {
+  renderApp(); // paint immediately so the page isn't blank while Firestore loads
+  state.products = await DB.getProducts();
   renderApp();
 }
 init();

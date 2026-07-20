@@ -11,7 +11,7 @@
 import { auth, db } from './firebase-config.js';
 import {
   createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
-  onAuthStateChanged, updateProfile,
+  onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup,
 } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js';
 import {
   collection, doc, setDoc, getDoc, getDocs, deleteDoc, updateDoc, query, where, orderBy,
@@ -22,6 +22,7 @@ import {
 --------------------------------------------------------------------- */
 const ADMIN_EMAILS = ['kokomina946@gmail.com', 'patrick.kimo2010@gmail.com', 'yassaking687@gmail.com'];
 const SUPPORT_PHONE = '01226754491';
+const PHONE_PATTERN = /^01[0125]\d{8}$/; // Egyptian mobile: 01 + network digit + 8 digits, 11 total
 
 const DEFAULT_PRODUCTS = [
   { id: 'p1', price: 1450, imageUrl: '', videoUrl: '', name: { en: 'Cedar desk lamp', ar: 'مصباح مكتب خشب الأرز' }, desc: { en: 'Warm brass fitting, adjustable arm.', ar: 'تركيب نحاسي دافئ، ذراع قابل للتعديل.' } },
@@ -73,6 +74,7 @@ const STRINGS = {
     cod_note: 'Pay in cash when your order arrives.',
     submit: 'Stamp my order', submitting: 'Stamping…', cancel: 'Cancel',
     required: 'Phone number and location are required.',
+    phone_invalid: 'Enter an 11-digit number like 01226754491.',
     success_title: 'Order stamped', success_body: 'Ticket number',
     success_sub: "We'll reach out on the number you gave us.", back_to_shop: 'Back to shop',
     admin_title: 'Ledger', admin_tab_orders: 'Orders', admin_tab_products: 'Products',
@@ -91,6 +93,7 @@ const STRINGS = {
     no_products: 'No products yet. Add your first one below.',
     remove: 'Remove', yes_remove: 'Yes, remove', keep: 'Keep it', new_product_title: 'Add a product',
     sign_in: 'Sign in', tab_signup: 'Sign up', tab_login: 'Log in',
+    continue_with_google: 'Continue with Google', or_divider: 'or',
     name_label: 'Full name', email_label: 'Email', phone_field_optional: 'Phone (optional)', password_label: 'Password',
     create_account_btn: 'Create account', log_in_btn: 'Log in',
     switch_to_login: 'Already have an account? Log in', switch_to_signup: "Don't have an account? Sign up",
@@ -113,6 +116,7 @@ const STRINGS = {
     cod_note: 'الدفع نقدًا عند استلام الطلب.',
     submit: 'اختم طلبي', submitting: 'جارٍ الختم…', cancel: 'إلغاء',
     required: 'رقم الهاتف والموقع مطلوبان.',
+    phone_invalid: 'أدخل رقمًا مكونًا من ١١ رقمًا مثل 01226754491.',
     success_title: 'تم ختم الطلب', success_body: 'رقم التذكرة',
     success_sub: 'سنتواصل معك على الرقم الذي أدخلته.', back_to_shop: 'العودة للمتجر',
     admin_title: 'السجل', admin_tab_orders: 'الطلبات', admin_tab_products: 'المنتجات',
@@ -131,6 +135,7 @@ const STRINGS = {
     no_products: 'لا توجد منتجات بعد. أضف أول منتج بالأسفل.',
     remove: 'إزالة', yes_remove: 'نعم، إزالة', keep: 'الاحتفاظ به', new_product_title: 'إضافة منتج',
     sign_in: 'تسجيل الدخول', tab_signup: 'إنشاء حساب', tab_login: 'تسجيل الدخول',
+    continue_with_google: 'المتابعة عبر جوجل', or_divider: 'أو',
     name_label: 'الاسم الكامل', email_label: 'البريد الإلكتروني', phone_field_optional: 'رقم الهاتف (اختياري)', password_label: 'كلمة المرور',
     create_account_btn: 'إنشاء الحساب', log_in_btn: 'تسجيل الدخول',
     switch_to_login: 'لديك حساب بالفعل؟ سجّل الدخول', switch_to_signup: 'ليس لديك حساب؟ أنشئ حسابًا',
@@ -288,6 +293,15 @@ function stampLogoSvg(size) {
     <circle cx="32" cy="32" r="29" fill="none" stroke="var(--brass)" stroke-width="2.5"/>
     <circle cx="32" cy="32" r="23" fill="none" stroke="var(--brass)" stroke-width="1" stroke-dasharray="2 3"/>
     <text x="32" y="38" text-anchor="middle" font-family="Fraunces, serif" font-weight="700" font-size="19" fill="var(--brass)">B</text>
+  </svg>`;
+}
+
+function googleIconSvg() {
+  return `<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.9-2.26 5.36-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
   </svg>`;
 }
 
@@ -542,11 +556,11 @@ function openBuyModal(productId) {
         <div class="modal-body">
           <div class="field">
             <label>${t('phone1')} <span class="req">*</span></label>
-            <div class="input-icon-wrap">${icon('phone', 15)}<input class="input" id="buy-phone1" type="tel" placeholder="+20 1xx xxx xxxx" value="${escapeHtml(prefillPhone)}"/></div>
+            <div class="input-icon-wrap">${icon('phone', 15)}<input class="input" id="buy-phone1" type="tel" inputmode="numeric" maxlength="11" placeholder="01226754491" value="${escapeHtml(prefillPhone)}"/></div>
           </div>
           <div class="field">
             <label>${t('phone2')}</label>
-            <div class="input-icon-wrap">${icon('phone', 15)}<input class="input" id="buy-phone2" type="tel" placeholder="+20 1xx xxx xxxx"/></div>
+            <div class="input-icon-wrap">${icon('phone', 15)}<input class="input" id="buy-phone2" type="tel" inputmode="numeric" maxlength="11" placeholder="01226754491"/></div>
           </div>
           <div class="field">
             <label>${t('location')} <span class="req">*</span></label>
@@ -616,6 +630,11 @@ async function submitOrder(product) {
     errEl.hidden = false;
     return;
   }
+  if (!PHONE_PATTERN.test(phone1) || (phone2 && !PHONE_PATTERN.test(phone2))) {
+    errEl.textContent = t('phone_invalid');
+    errEl.hidden = false;
+    return;
+  }
 
   const order = {
     id: makeTicketNo(), productId: product.id, productName: product.name[state.lang], price: product.price,
@@ -677,6 +696,8 @@ function openAuthModal(mode = 'login') {
         <div id="auth-error" class="error-text" hidden></div>
         <button class="brass-btn" id="auth-submit" style="width:100%;margin-top:6px">${mode === 'signup' ? t('create_account_btn') : t('log_in_btn')}</button>
         <button class="text-btn" id="auth-switch" style="margin-top:14px">${mode === 'signup' ? t('switch_to_login') : t('switch_to_signup')}</button>
+        <div class="auth-divider">${t('or_divider')}</div>
+        <button class="google-btn" id="google-signin">${googleIconSvg()} ${t('continue_with_google')}</button>
       </div>
     </div>`;
 
@@ -689,6 +710,7 @@ function openAuthModal(mode = 'login') {
   });
   document.getElementById('auth-switch').addEventListener('click', () => setAuthMode(currentMode === 'signup' ? 'login' : 'signup'));
   document.getElementById('auth-submit').addEventListener('click', handleAuthSubmit);
+  document.getElementById('google-signin').addEventListener('click', handleGoogleSignin);
 
   function setAuthMode(m) {
     currentMode = m;
@@ -705,7 +727,7 @@ function openAuthModal(mode = 'login') {
       ${m === 'signup' ? `<div class="field"><label>${t('name_label')} <span class="req">*</span></label><input class="input" id="auth-name"/></div>` : ''}
       <div class="field"><label>${t('email_label')} <span class="req">*</span></label><input class="input" id="auth-email" type="email" placeholder="name@email.com"/></div>
       <div class="field"><label>${t('password_label')} <span class="req">*</span></label><input class="input" id="auth-password" type="password" placeholder="••••••••"/></div>
-      ${m === 'signup' ? `<div class="field"><label>${t('phone_field_optional')}</label><input class="input" id="auth-phone" type="tel"/></div>` : ''}
+      ${m === 'signup' ? `<div class="field"><label>${t('phone_field_optional')}</label><input class="input" id="auth-phone" type="tel" inputmode="numeric" maxlength="11" placeholder="01226754491"/></div>` : ''}
     `;
   }
 
@@ -729,6 +751,19 @@ function openAuthModal(mode = 'login') {
     if (!result.ok) {
       errEl.textContent = result.error;
       errEl.hidden = false;
+      return;
+    }
+    closeAuthModal();
+  }
+
+  async function handleGoogleSignin() {
+    const errEl = document.getElementById('auth-error');
+    const googleBtn = document.getElementById('google-signin');
+    googleBtn.disabled = true;
+    const result = await loginWithGoogle();
+    googleBtn.disabled = false;
+    if (!result.ok) {
+      if (result.error) { errEl.textContent = result.error; errEl.hidden = false; }
       return;
     }
     closeAuthModal();
@@ -770,6 +805,27 @@ async function login({ email, password }) {
     await signInWithEmailAndPassword(auth, email, password);
     return { ok: true };
   } catch (e) {
+    return { ok: false, error: authErrorMessage(e) };
+  }
+}
+
+async function loginWithGoogle() {
+  try {
+    const cred = await signInWithPopup(auth, new GoogleAuthProvider());
+    const existing = await DB.getUserProfile(cred.user.uid).catch(() => null);
+    if (!existing) {
+      await DB.setUserProfile(cred.user.uid, {
+        name: cred.user.displayName || cred.user.email,
+        email: cred.user.email,
+        phone: '',
+        createdAt: new Date().toISOString(),
+      });
+    }
+    return { ok: true };
+  } catch (e) {
+    if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+      return { ok: false, error: '' }; // they just closed the popup — no need to alarm them
+    }
     return { ok: false, error: authErrorMessage(e) };
   }
 }

@@ -101,6 +101,22 @@ Log in (or sign up first) with one of the emails in `ADMIN_EMAILS` at the
 top of `app.js`. Once logged in with one of those, an **Admin ledger**
 option appears in the account menu (click your name, top right).
 
+## Turning on "Continue with Google"
+Two quick things in the Firebase console, or the Google button will show
+an error when clicked:
+
+1. **Build → Authentication → Sign-in method** → click **Google** → **Enable** → save.
+2. **Build → Authentication → Settings → Authorized domains** → make sure
+   whatever domain the site is actually running on is listed — e.g.
+   `koko11111111.github.io`, and later your `.com` once that's live.
+   `localhost` is already there by default, so local testing works
+   without touching this.
+
+Customers who use Google get logged in instantly with their Google name
+and email — no password to set. If one of your three admin emails signs
+up this way instead of with a password, the Admin ledger option still
+shows up for them automatically, same as any other sign-in method.
+
 ## Adding products
 Admin ledger → Products tab → fill in the English/Arabic name, description,
 price, and (optional) an **Image URL** and **Video URL**. Since this is a

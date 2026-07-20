@@ -47,7 +47,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return request.auth != null &&
-        request.auth.token.email in ['kokomina946@gmail.com', 'patrick.kimo2010@gmail.com'];
+        request.auth.token.email in ['kokomina946@gmail.com', 'patrick.kimo2010@gmail.com', 'yassaking687@gmail.com'];
     }
 
     match /products/{productId} {
@@ -59,10 +59,17 @@ service cloud.firestore {
       allow create: if request.resource.data.phone1 is string &&
         request.resource.data.phone1.size() > 0 &&
         request.resource.data.location is string &&
-        request.resource.data.location.size() > 0;
+        request.resource.data.location.size() > 0 &&
+        request.resource.data.status == 'pending';
       allow read: if isAdmin() ||
         (request.auth != null && request.auth.token.email == resource.data.buyerEmail);
-      allow update, delete: if isAdmin();
+      allow update: if isAdmin() ||
+        (request.auth != null &&
+         request.auth.token.email == resource.data.buyerEmail &&
+         resource.data.status == 'pending' &&
+         request.resource.data.status == 'cancelled' &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']));
+      allow delete: if isAdmin();
     }
 
     match /users/{userId} {

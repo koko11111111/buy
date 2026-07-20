@@ -14,13 +14,14 @@ import {
   onAuthStateChanged, updateProfile,
 } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js';
 import {
-  collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, where, orderBy,
+  collection, doc, setDoc, getDoc, getDocs, deleteDoc, updateDoc, query, where, orderBy,
 } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js';
 
 /* ---------------------------------------------------------------------
    CONFIG — edit these two things for your real store.
 --------------------------------------------------------------------- */
 const ADMIN_EMAILS = ['kokomina946@gmail.com', 'patrick.kimo2010@gmail.com', 'yassaking687@gmail.com'];
+const SUPPORT_PHONE = '01226754491';
 
 const DEFAULT_PRODUCTS = [
   { id: 'p1', price: 1450, imageUrl: '', videoUrl: '', name: { en: 'Cedar desk lamp', ar: 'مصباح مكتب خشب الأرز' }, desc: { en: 'Warm brass fitting, adjustable arm.', ar: 'تركيب نحاسي دافئ، ذراع قابل للتعديل.' } },
@@ -69,13 +70,18 @@ const STRINGS = {
     use_location: 'Use my current location', locating: 'Locating…',
     location_denied: "Couldn't get your location. Type it in instead.",
     notes: 'Notes', add_note: 'Add a note', note_ph: 'e.g. Call before arriving',
+    cod_note: 'Pay in cash when your order arrives.',
     submit: 'Stamp my order', submitting: 'Stamping…', cancel: 'Cancel',
     required: 'Phone number and location are required.',
     success_title: 'Order stamped', success_body: 'Ticket number',
     success_sub: "We'll reach out on the number you gave us.", back_to_shop: 'Back to shop',
     admin_title: 'Ledger', admin_tab_orders: 'Orders', admin_tab_products: 'Products',
     admin_empty_title: 'No tickets yet', admin_empty_body: 'New orders will show up here the moment someone stamps one.',
-    col_ticket: 'Ticket', col_product: 'Product', col_buyer: 'Buyer', col_phones: 'Phones', col_location: 'Location', col_notes: 'Notes', col_time: 'Time',
+    col_ticket: 'Ticket', col_product: 'Product', col_buyer: 'Buyer', col_phones: 'Phones', col_location: 'Location', col_notes: 'Notes', col_time: 'Time', col_status: 'Status',
+    status_pending: 'Pending', status_done: 'Done', status_cancelled: 'Cancelled',
+    mark_done: 'Mark as done', mark_pending: 'Mark as pending',
+    undo_ticket: 'Cancel this order', undo_ask: 'Cancel this order?', undo_yes: 'Yes, cancel it', undo_keep: 'Never mind',
+    support_label: 'Need help with this order?', call_support: 'Call support',
     guest_label: 'Guest', loading: 'Loading…',
     product_name_en: 'Name (English)', product_name_ar: 'Name (Arabic)',
     product_desc_en: 'Description (English)', product_desc_ar: 'Description (Arabic)',
@@ -104,13 +110,18 @@ const STRINGS = {
     use_location: 'استخدم موقعي الحالي', locating: 'جارٍ تحديد الموقع…',
     location_denied: 'تعذّر تحديد موقعك. اكتبه يدويًا.',
     notes: 'ملاحظات', add_note: 'إضافة ملاحظة', note_ph: 'مثال: اتصل قبل الوصول',
+    cod_note: 'الدفع نقدًا عند استلام الطلب.',
     submit: 'اختم طلبي', submitting: 'جارٍ الختم…', cancel: 'إلغاء',
     required: 'رقم الهاتف والموقع مطلوبان.',
     success_title: 'تم ختم الطلب', success_body: 'رقم التذكرة',
     success_sub: 'سنتواصل معك على الرقم الذي أدخلته.', back_to_shop: 'العودة للمتجر',
     admin_title: 'السجل', admin_tab_orders: 'الطلبات', admin_tab_products: 'المنتجات',
     admin_empty_title: 'لا توجد تذاكر بعد', admin_empty_body: 'ستظهر الطلبات الجديدة هنا فور ختمها.',
-    col_ticket: 'التذكرة', col_product: 'المنتج', col_buyer: 'المشتري', col_phones: 'الهواتف', col_location: 'الموقع', col_notes: 'ملاحظات', col_time: 'الوقت',
+    col_ticket: 'التذكرة', col_product: 'المنتج', col_buyer: 'المشتري', col_phones: 'الهواتف', col_location: 'الموقع', col_notes: 'ملاحظات', col_time: 'الوقت', col_status: 'الحالة',
+    status_pending: 'قيد الانتظار', status_done: 'تم التنفيذ', status_cancelled: 'ملغي',
+    mark_done: 'تحديد كمكتمل', mark_pending: 'إعادة إلى الانتظار',
+    undo_ticket: 'إلغاء الطلب', undo_ask: 'هل تريد إلغاء هذا الطلب؟', undo_yes: 'نعم، ألغِ الطلب', undo_keep: 'تراجع',
+    support_label: 'تحتاج مساعدة بخصوص هذا الطلب؟', call_support: 'اتصل بالدعم',
     guest_label: 'زائر', loading: 'جارٍ التحميل…',
     product_name_en: 'الاسم (إنجليزي)', product_name_ar: 'الاسم (عربي)',
     product_desc_en: 'الوصف (إنجليزي)', product_desc_ar: 'الوصف (عربي)',
@@ -184,6 +195,9 @@ const DB = {
     await setDoc(doc(db, 'orders', id), data);
     return order;
   },
+  async updateOrderStatus(id, status) {
+    await updateDoc(doc(db, 'orders', id), { status });
+  },
   async getUserProfile(uid) {
     const snap = await getDoc(doc(db, 'users', uid));
     return snap.exists() ? snap.data() : null;
@@ -197,7 +211,7 @@ const DB = {
    STATE
 --------------------------------------------------------------------- */
 const state = {
-  lang: 'en',
+  lang: 'ar',
   view: 'shop', // shop | admin | myorders
   adminTab: 'orders',
   products: [],
@@ -309,20 +323,36 @@ function renderShop() {
    RENDER: MY ORDERS
 --------------------------------------------------------------------- */
 function renderMyOrders() {
-  const mine = state.orders.filter(o => o.buyerEmail && o.buyerEmail.toLowerCase() === state.currentUser.email.toLowerCase());
+  const mine = state.orders;
   const body = mine.length === 0
     ? `<div class="empty-box"><div class="empty-title display">${t('my_orders_empty_title')}</div><div class="empty-body">${t('my_orders_empty_body')}</div></div>`
-    : `<div class="my-orders-list">${mine.map(o => `
-        <div class="ticket-card my-order-row">
-          <div>
-            <div class="product-name">${escapeHtml(o.productName)}</div>
-            <div class="product-desc">${escapeHtml(o.location)}</div>
+    : `<div class="my-orders-list">${mine.map(o => {
+        const status = o.status || 'pending';
+        return `
+        <div class="ticket-card" data-order-card="${o.id}">
+          <div class="my-order-row">
+            <div>
+              <div class="product-name">${escapeHtml(o.productName)}</div>
+              <div class="product-desc">${escapeHtml(o.location)}</div>
+            </div>
+            <div style="text-align:end">
+              <div class="mono" style="font-size:12.5px;font-weight:500;color:var(--brass-dark)">${o.id}</div>
+              <div class="sub-cell">${formatTime(o.timestamp)}</div>
+            </div>
           </div>
-          <div style="text-align:end">
-            <div class="mono" style="font-size:12.5px;font-weight:500;color:var(--brass-dark)">${o.id}</div>
-            <div class="sub-cell">${formatTime(o.timestamp)}</div>
+          <div class="ticket-divider"></div>
+          <div style="padding:12px 18px 16px" data-order-footer="${o.id}">
+            <span class="status-badge status-${status}">${t('status_' + status)}</span>
+            ${status === 'pending' ? `<div style="margin-top:8px">
+              <button class="outline-btn" style="color:var(--rose)" data-action="ask-undo" data-id="${o.id}">${t('undo_ticket')}</button>
+            </div>` : ''}
+            ${status === 'done' ? `<div class="support-note">
+              ${t('support_label')}<br/>
+              <a href="tel:${SUPPORT_PHONE}">${icon('phone', 12)} ${t('call_support')}: ${SUPPORT_PHONE}</a>
+            </div>` : ''}
           </div>
-        </div>`).join('')}</div>`;
+        </div>`;
+      }).join('')}</div>`;
 
   return `
     <div class="page">
@@ -332,6 +362,44 @@ function renderMyOrders() {
       </div>
       ${body}
     </div>`;
+}
+
+function askUndoOrder(id) {
+  const zone = document.querySelector(`[data-order-footer="${id}"]`);
+  if (!zone) return;
+  const status = (state.orders.find(o => o.id === id) || {}).status || 'pending';
+  zone.innerHTML = `
+    <span class="status-badge status-${status}">${t('status_' + status)}</span>
+    <div style="margin-top:8px">
+      <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:6px">${t('undo_ask')}</div>
+      <div class="confirm-row">
+        <button class="danger-btn" data-action="confirm-undo" data-id="${id}">${t('undo_yes')}</button>
+        <button class="outline-btn" data-action="cancel-undo" data-id="${id}">${t('undo_keep')}</button>
+      </div>
+    </div>`;
+  zone.querySelector('[data-action="confirm-undo"]').addEventListener('click', () => confirmUndoOrder(id));
+  zone.querySelector('[data-action="cancel-undo"]').addEventListener('click', () => {
+    renderApp();
+    wireMyOrdersEvents();
+  });
+}
+
+async function confirmUndoOrder(id) {
+  try {
+    await DB.updateOrderStatus(id, 'cancelled');
+    const o = state.orders.find(x => x.id === id);
+    if (o) o.status = 'cancelled';
+    renderApp();
+    wireMyOrdersEvents();
+  } catch (e) {
+    console.error('Could not cancel order:', e);
+  }
+}
+
+function wireMyOrdersEvents() {
+  document.querySelectorAll('[data-action="ask-undo"]').forEach(btn => {
+    btn.addEventListener('click', () => askUndoOrder(btn.dataset.id));
+  });
 }
 
 /* ---------------------------------------------------------------------
@@ -356,7 +424,9 @@ function renderOrdersTab() {
   if (state.orders.length === 0) {
     return `<div class="empty-box"><div class="empty-title display">${t('admin_empty_title')}</div><div class="empty-body">${t('admin_empty_body')}</div></div>`;
   }
-  const rows = state.orders.map(o => `
+  const rows = state.orders.map(o => {
+    const status = o.status || 'pending';
+    return `
     <tr>
       <td class="mono" style="font-weight:500;white-space:nowrap">${o.id}</td>
       <td>${escapeHtml(o.productName)}<div class="sub-cell mono">${formatPrice(o.price)}</div></td>
@@ -365,16 +435,43 @@ function renderOrdersTab() {
       <td style="max-width:180px">${escapeHtml(o.location)}</td>
       <td style="max-width:200px;color:var(--ink-soft)">${o.notes && o.notes.length ? o.notes.map(escapeHtml).join(' · ') : '—'}</td>
       <td style="white-space:nowrap;color:var(--ink-soft);font-size:12px">${formatTime(o.timestamp)}</td>
-    </tr>`).join('');
+      <td style="white-space:nowrap">
+        <span class="status-badge status-${status}">${t('status_' + status)}</span>
+        ${status !== 'cancelled' ? `<div style="margin-top:6px">
+          <button class="text-btn" data-action="toggle-status" data-id="${o.id}" data-next="${status === 'done' ? 'pending' : 'done'}">
+            ${status === 'done' ? t('mark_pending') : t('mark_done')}
+          </button>
+        </div>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
 
   return `
     <div class="table-wrap"><div class="table-scroll"><table>
       <thead><tr>
         <th>${t('col_ticket')}</th><th>${t('col_product')}</th><th>${t('col_buyer')}</th>
-        <th>${t('col_phones')}</th><th>${t('col_location')}</th><th>${t('col_notes')}</th><th>${t('col_time')}</th>
+        <th>${t('col_phones')}</th><th>${t('col_location')}</th><th>${t('col_notes')}</th><th>${t('col_time')}</th><th>${t('col_status')}</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table></div></div>`;
+}
+
+async function toggleOrderStatus(id, nextStatus) {
+  try {
+    await DB.updateOrderStatus(id, nextStatus);
+    const o = state.orders.find(x => x.id === id);
+    if (o) o.status = nextStatus;
+    document.getElementById('admin-tab-content').innerHTML = renderOrdersTab();
+    wireOrdersTabEvents();
+  } catch (e) {
+    console.error('Could not update order status:', e);
+  }
+}
+
+function wireOrdersTabEvents() {
+  document.querySelectorAll('[data-action="toggle-status"]').forEach(btn => {
+    btn.addEventListener('click', () => toggleOrderStatus(btn.dataset.id, btn.dataset.next));
+  });
 }
 
 function renderProductsTab() {
@@ -465,6 +562,7 @@ function openBuyModal(productId) {
             <button class="add-note-btn" id="buy-add-note" style="margin-top:8px">${icon('plus', 14)} ${t('add_note')}</button>
           </div>
           <div id="buy-error" class="error-text" hidden></div>
+          <div class="cod-note">${icon('package', 14)} ${t('cod_note')}</div>
           <button class="brass-btn" id="buy-submit" style="width:100%;padding:13px">${t('submit')}</button>
         </div>
       </div>
@@ -521,7 +619,7 @@ async function submitOrder(product) {
 
   const order = {
     id: makeTicketNo(), productId: product.id, productName: product.name[state.lang], price: product.price,
-    phone1, phone2, location, notes,
+    phone1, phone2, location, notes, status: 'pending',
     buyerName: state.currentUser ? state.currentUser.name : '',
     buyerEmail: state.currentUser ? state.currentUser.email : '',
     timestamp: new Date().toISOString(),
@@ -797,6 +895,7 @@ document.addEventListener('click', async (e) => {
       catch (err) { console.error('Could not load your orders:', err); state.orders = []; }
       state.view = 'myorders';
       renderApp();
+      wireMyOrdersEvents();
       break;
     case 'nav-admin':
       document.getElementById('account-menu').hidden = true;
@@ -805,6 +904,7 @@ document.addEventListener('click', async (e) => {
       try { state.orders = await DB.getAllOrders(); }
       catch (err) { console.error('Could not load orders:', err); state.orders = []; }
       renderApp();
+      wireOrdersTabEvents();
       break;
     case 'logout':
       logout();
@@ -818,6 +918,7 @@ document.addEventListener('click', async (e) => {
       if (state.adminTab === 'products') state.products = await DB.getProducts();
       document.getElementById('admin-tab-content').innerHTML = state.adminTab === 'orders' ? renderOrdersTab() : renderProductsTab();
       if (state.adminTab === 'products') wireProductsTabEvents();
+      else wireOrdersTabEvents();
       document.querySelectorAll('.tab-btn[data-action="admin-tab"]').forEach(b => b.classList.toggle('active', b.dataset.tab === state.adminTab));
       break;
     default:

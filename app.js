@@ -497,12 +497,16 @@ function renderProductsTab() {
     : `<div class="product-manage-grid">${state.products.map(p => `
         <div class="product-manage-card">
           ${p.imageUrl ? `<img class="product-manage-image" src="${escapeHtml(p.imageUrl)}" alt="" onerror="this.style.display='none'"/>` : ''}
-          <div class="product-manage-body">
-            <div class="row gap-md" style="margin-bottom:8px">
-              ${!p.imageUrl ? `<div class="product-icon" style="width:32px;height:32px;margin:0">${icon('package', 16)}</div>` : ''}
-              <div class="product-name" style="font-size:14px">${escapeHtml(p.name[state.lang])}</div>
-            </div>
-            <div class="mono" style="font-size:13px;margin-bottom:10px">${formatPrice(p.price)}</div>
+         // Inside renderProductsTab(), update the product manage card layout:
+<div class="product-manage-body">
+  <div class="row between" style="margin-bottom:8px">
+    <div class="row gap-md">
+      ${!p.imageUrl ? `<div class="product-icon" style="width:32px;height:32px;margin:0">${icon('package', 16)}</div>` : ''}
+      <div class="product-name" style="font-size:14px">${escapeHtml(p.name[state.lang])}</div>
+    </div>
+    ${p.code ? `<span class="code-badge mono">${escapeHtml(p.code)}</span>` : ''}
+  </div>
+  <div class="mono" style="font-size:13px;margin-bottom:10px">${formatPrice(p.price)}</div>
             <div class="remove-zone" data-id="${p.id}">
               <button class="outline-btn row gap-sm" style="color:var(--rose)" data-action="ask-remove" data-id="${p.id}">${icon('trash', 13)} ${t('remove')}</button>
             </div>

@@ -185,16 +185,19 @@ const DB = {
   async removeProduct(id) {
     await deleteDoc(doc(db, 'products', id));
   },
-  async getAllOrders() {
-    const q = query(collection(db, 'orders'), orderBy('timestamp', 'desc'));
-    const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  },
-  async getOrdersByBuyer(email) {
-    const q = query(collection(db, 'orders'), where('buyerEmail', '==', email), orderBy('timestamp', 'desc'));
-    const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  },
+async getAllOrders() {
+  const snap = await getDocs(collection(db, 'orders'));
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+},
+async getOrdersByBuyer(email) {
+  const q = query(collection(db, 'orders'), where('buyerEmail', '==', email));
+  const snap = await getDocs(q);
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+},
   async addOrder(order) {
     const { id, ...data } = order;
     await setDoc(doc(db, 'orders', id), data);

@@ -1,9 +1,9 @@
 /* =====================================================================
-   BUY â€” a bilingual (EN/AR) product ordering site with accounts and an
+   BUY — a bilingual (EN/AR) product ordering site with accounts and an
    admin panel, built with plain HTML/CSS/JS + Firebase.
 
    DATA: Firebase Authentication (real, secure login) + Firestore
-   (shared database â€” every device/browser sees the same products,
+   (shared database — every device/browser sees the same products,
    orders, and accounts). See README.md for the security rules to
    paste into your Firebase console.
    ===================================================================== */
@@ -18,23 +18,23 @@ import {
 } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js';
 
 /* ---------------------------------------------------------------------
-   CONFIG â€” edit these two things for your real store.
+   CONFIG — edit these two things for your real store.
 --------------------------------------------------------------------- */
 const ADMIN_EMAILS = ['kokomina946@gmail.com', 'patrick.kimo2010@gmail.com', 'yassaking687@gmail.com'];
 const SUPPORT_PHONE = '01226754491';
 const PHONE_PATTERN = /^01[0125]\d{8}$/; // Egyptian mobile: 01 + network digit + 8 digits, 11 total
 
 const DEFAULT_PRODUCTS = [
-  { id: 'p1', code: 'LMP-01', category: 'Home', price: 1450, imageUrl: '', videoUrl: '', name: { en: 'Cedar desk lamp', ar: 'Ù…ØµØ¨Ø§Ø­ Ù…ÙƒØªØ¨ Ø®Ø´Ø¨ Ø§Ù„Ø£Ø±Ø²' }, desc: { en: 'Warm brass fitting, adjustable arm.', ar: 'ØªØ±ÙƒÙŠØ¨ Ù†Ø­Ø§Ø³ÙŠ Ø¯Ø§ÙØ¦ØŒ Ø°Ø±Ø§Ø¹ Ù‚Ø§Ø¨Ù„ Ù„Ù„ØªØ¹Ø¯ÙŠÙ„.' } },
-  { id: 'p2', code: 'CFF-01', category: 'Kitchen', price: 620, imageUrl: '', videoUrl: '', name: { en: 'Pour-over coffee set', ar: 'Ø·Ù‚Ù… Ù‚Ù‡ÙˆØ© Ù…Ù‚Ø·Ø±Ø© ÙŠØ¯ÙˆÙŠÙ‹Ø§' }, desc: { en: 'Ceramic dripper, glass carafe.', ar: 'Ù…ØµÙØ§Ø© Ø³ÙŠØ±Ø§Ù…ÙŠÙƒØŒ Ø¥Ø¨Ø±ÙŠÙ‚ Ø²Ø¬Ø§Ø¬ÙŠ.' } },
-  { id: 'p3', code: 'WTC-01', category: 'Accessories', price: 2300, imageUrl: '', videoUrl: '', name: { en: 'Field watch', ar: 'Ø³Ø§Ø¹Ø© Ù…ÙŠØ¯Ø§Ù†ÙŠØ©' }, desc: { en: 'Stainless case, canvas strap.', ar: 'Ù‡ÙŠÙƒÙ„ Ø³ØªØ§Ù†Ù„Ø³ØŒ Ø³ÙˆØ§Ø± Ù‚Ù…Ø§Ø´ÙŠ.' } },
-  { id: 'p4', code: 'BAG-01', category: 'Accessories', price: 980, imageUrl: '', videoUrl: '', name: { en: 'Canvas day pack', ar: 'Ø­Ù‚ÙŠØ¨Ø© Ø¸Ù‡Ø± Ù‚Ù…Ø§Ø´ÙŠØ©' }, desc: { en: 'Water-resistant, leather trims.', ar: 'Ù…Ù‚Ø§ÙˆÙ…Ø© Ù„Ù„Ù…Ø§Ø¡ØŒ Ø­ÙˆØ§Ù Ø¬Ù„Ø¯ÙŠØ©.' } },
-  { id: 'p5', code: 'AUD-01', category: 'Electronics', price: 1750, imageUrl: '', videoUrl: '', name: { en: 'Studio headphones', ar: 'Ø³Ù…Ø§Ø¹Ø§Øª Ø§Ø³ØªÙˆØ¯ÙŠÙˆ' }, desc: { en: 'Over-ear, foldable frame.', ar: 'Ù…Ø­ÙŠØ·Ø© Ø¨Ø§Ù„Ø£Ø°Ù†ØŒ Ù‡ÙŠÙƒÙ„ Ù‚Ø§Ø¨Ù„ Ù„Ù„Ø·ÙŠ.' } },
-  { id: 'p6', code: 'BOK-01', category: 'Stationery', price: 340, imageUrl: '', videoUrl: '', name: { en: 'Leather journal', ar: 'Ø¯ÙØªØ± Ø¬Ù„Ø¯ÙŠ' }, desc: { en: '200 pages, dotted grid.', ar: 'Ù¢Ù Ù  ØµÙØ­Ø©ØŒ Ø´Ø¨ÙƒØ© Ù…Ù†Ù‚Ø·Ø©.' } },
+  { id: 'p1', code: 'LMP-01', category: 'Home', price: 1450, imageUrl: '', videoUrl: '', name: { en: 'Cedar desk lamp', ar: 'مصباح مكتب خشب الأرز' }, desc: { en: 'Warm brass fitting, adjustable arm.', ar: 'تركيب نحاسي دافئ، ذراع قابل للتعديل.' } },
+  { id: 'p2', code: 'CFF-01', category: 'Kitchen', price: 620, imageUrl: '', videoUrl: '', name: { en: 'Pour-over coffee set', ar: 'طقم قهوة مقطرة يدويًا' }, desc: { en: 'Ceramic dripper, glass carafe.', ar: 'مصفاة سيراميك، إبريق زجاجي.' } },
+  { id: 'p3', code: 'WTC-01', category: 'Accessories', price: 2300, imageUrl: '', videoUrl: '', name: { en: 'Field watch', ar: 'ساعة ميدانية' }, desc: { en: 'Stainless case, canvas strap.', ar: 'هيكل ستانلس، سوار قماشي.' } },
+  { id: 'p4', code: 'BAG-01', category: 'Accessories', price: 980, imageUrl: '', videoUrl: '', name: { en: 'Canvas day pack', ar: 'حقيبة ظهر قماشية' }, desc: { en: 'Water-resistant, leather trims.', ar: 'مقاومة للماء، حواف جلدية.' } },
+  { id: 'p5', code: 'AUD-01', category: 'Electronics', price: 1750, imageUrl: '', videoUrl: '', name: { en: 'Studio headphones', ar: 'سماعات استوديو' }, desc: { en: 'Over-ear, foldable frame.', ar: 'محيطة بالأذن، هيكل قابل للطي.' } },
+  { id: 'p6', code: 'BOK-01', category: 'Stationery', price: 340, imageUrl: '', videoUrl: '', name: { en: 'Leather journal', ar: 'دفتر جلدي' }, desc: { en: '200 pages, dotted grid.', ar: '٢٠٠ صفحة، شبكة منقطة.' } },
 ];
 
 /* ---------------------------------------------------------------------
-   ICONS â€” small hand-rolled SVGs, no external icon library needed.
+   ICONS — small hand-rolled SVGs, no external icon library needed.
 --------------------------------------------------------------------- */
 const ICON_PATHS = {
   phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>',
@@ -159,7 +159,7 @@ const STRINGS = {
 
 /* ---------------------------------------------------------------------
    DATABASE (Firestore-backed)
-   Each product/order is its own document â€” never one big blob â€” so two
+   Each product/order is its own document — never one big blob — so two
    people writing at the same time can't clobber each other's data.
 --------------------------------------------------------------------- */
 const DB = {
@@ -291,7 +291,7 @@ function renderHeader() {
         <span class="brand-name">${escapeHtml(t('brand'))}</span>
       </div>
       <div class="header-actions">
-        <button class="pill-btn" data-action="toggle-lang">${icon('globe', 14)} ${state.lang === 'en' ? 'Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©' : 'English'}</button>
+        <button class="pill-btn" data-action="toggle-lang">${icon('globe', 14)} ${state.lang === 'en' ? 'العربية' : 'English'}</button>
         ${accountHtml}
       </div>
     </header>`;
@@ -483,7 +483,7 @@ function renderOrdersTab() {
       <td style="max-width:160px">${o.buyerName ? `<div>${escapeHtml(o.buyerName)}</div><div class="sub-cell">${escapeHtml(o.buyerEmail)}</div>` : `<span style="color:var(--ink-soft)">${t('guest_label')}</span>`}</td>
       <td style="white-space:nowrap"><div>${escapeHtml(o.phone1)}</div>${o.phone2 ? `<div class="sub-cell">${escapeHtml(o.phone2)}</div>` : ''}</td>
       <td style="max-width:180px">${escapeHtml(o.location)}</td>
-      <td style="max-width:200px;color:var(--ink-soft)">${o.notes && o.notes.length ? o.notes.map(escapeHtml).join(' Â· ') : 'â€”'}</td>
+      <td style="max-width:200px;color:var(--ink-soft)">${o.notes && o.notes.length ? o.notes.map(escapeHtml).join(' · ') : '—'}</td>
       <td style="white-space:nowrap;color:var(--ink-soft);font-size:12px">${formatTime(o.timestamp)}</td>
       <td style="white-space:nowrap">
         <span class="status-badge status-${status}">${t('status_' + status)}</span>
@@ -557,8 +557,8 @@ function renderProductsTab() {
         <div class="field"><label>${t('product_price')}</label><input class="input" id="np-price" type="number" min="0"/></div>
         <div class="field"><label>${t('code_label')}</label><input class="input" id="np-code"/></div>
         <div class="field"><label>${t('category_label')}</label><input class="input" id="np-category"/></div>
-        <div class="field"><label>${t('image_url_label')}</label><input class="input" id="np-image" placeholder="https://â€¦"/></div>
-        <div class="field" style="grid-column:1/-1"><label>${t('video_url_label')}</label><input class="input" id="np-video" placeholder="https://â€¦"/></div>
+        <div class="field"><label>${t('image_url_label')}</label><input class="input" id="np-image" placeholder="https://…"/></div>
+        <div class="field" style="grid-column:1/-1"><label>${t('video_url_label')}</label><input class="input" id="np-video" placeholder="https://…"/></div>
       </div>
       <div id="np-error" class="error-text" hidden></div>
       <button class="brass-btn" data-action="add-product" style="margin-top:6px">${icon('plus', 14)} ${t('add_product')}</button>
@@ -836,7 +836,7 @@ function openAuthModal(mode = 'login') {
     wrap.innerHTML = `
       ${m === 'signup' ? `<div class="field"><label>${t('name_label')} <span class="req">*</span></label><input class="input" id="auth-name"/></div>` : ''}
       <div class="field"><label>${t('email_label')} <span class="req">*</span></label><input class="input" id="auth-email" type="email" placeholder="name@email.com"/></div>
-      <div class="field"><label>${t('password_label')} <span class="req">*</span></label><input class="input" id="auth-password" type="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"/></div>
+      <div class="field"><label>${t('password_label')} <span class="req">*</span></label><input class="input" id="auth-password" type="password" placeholder="••••••••"/></div>
       ${m === 'signup' ? `<div class="field"><label>${t('phone_field_optional')}</label><input class="input" id="auth-phone" type="tel" inputmode="numeric" maxlength="11" placeholder="01226754491"/></div>` : ''}
     `;
   }
@@ -934,7 +934,7 @@ async function loginWithGoogle() {
     return { ok: true };
   } catch (e) {
     if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
-      return { ok: false, error: '' }; // they just closed the popup â€” no need to alarm them
+      return { ok: false, error: '' }; // they just closed the popup — no need to alarm them
     }
     return { ok: false, error: authErrorMessage(e) };
   }

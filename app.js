@@ -1,9 +1,9 @@
-//* =====================================================================
-   BUY — a bilingual (EN/AR) product ordering site with accounts and an
+/* =====================================================================
+   BUY â€” a bilingual (EN/AR) product ordering site with accounts and an
    admin panel, built with plain HTML/CSS/JS + Firebase.
 
    DATA: Firebase Authentication (real, secure login) + Firestore
-   (shared database — every device/browser sees the same products,
+   (shared database â€” every device/browser sees the same products,
    orders, and accounts). See README.md for the security rules to
    paste into your Firebase console.
    ===================================================================== */
@@ -18,23 +18,23 @@ import {
 } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js';
 
 /* ---------------------------------------------------------------------
-   CONFIG — edit these two things for your real store.
+   CONFIG â€” edit these two things for your real store.
 --------------------------------------------------------------------- */
 const ADMIN_EMAILS = ['kokomina946@gmail.com', 'patrick.kimo2010@gmail.com', 'yassaking687@gmail.com'];
 const SUPPORT_PHONE = '01226754491';
 const PHONE_PATTERN = /^01[0125]\d{8}$/; // Egyptian mobile: 01 + network digit + 8 digits, 11 total
 
 const DEFAULT_PRODUCTS = [
-  { id: 'p1', code: 'LMP-01', category: 'Home', price: 1450, imageUrl: '', videoUrl: '', name: { en: 'Cedar desk lamp', ar: 'مصباح مكتب خشب الأرز' }, desc: { en: 'Warm brass fitting, adjustable arm.', ar: 'تركيب نحاسي دافئ، ذراع قابل للتعديل.' } },
-  { id: 'p2', code: 'CFF-01', category: 'Kitchen', price: 620, imageUrl: '', videoUrl: '', name: { en: 'Pour-over coffee set', ar: 'طقم قهوة مقطرة يدويًا' }, desc: { en: 'Ceramic dripper, glass carafe.', ar: 'مصفاة سيراميك، إبريق زجاجي.' } },
-  { id: 'p3', code: 'WTC-01', category: 'Accessories', price: 2300, imageUrl: '', videoUrl: '', name: { en: 'Field watch', ar: 'ساعة ميدانية' }, desc: { en: 'Stainless case, canvas strap.', ar: 'هيكل ستانلس، سوار قماشي.' } },
-  { id: 'p4', code: 'BAG-01', category: 'Accessories', price: 980, imageUrl: '', videoUrl: '', name: { en: 'Canvas day pack', ar: 'حقيبة ظهر قماشية' }, desc: { en: 'Water-resistant, leather trims.', ar: 'مقاومة للماء، حواف جلدية.' } },
-  { id: 'p5', code: 'AUD-01', category: 'Electronics', price: 1750, imageUrl: '', videoUrl: '', name: { en: 'Studio headphones', ar: 'سماعات استوديو' }, desc: { en: 'Over-ear, foldable frame.', ar: 'محيطة بالأذن، هيكل قابل للطي.' } },
-  { id: 'p6', code: 'BOK-01', category: 'Stationery', price: 340, imageUrl: '', videoUrl: '', name: { en: 'Leather journal', ar: 'دفتر جلدي' }, desc: { en: '200 pages, dotted grid.', ar: '٢٠٠ صفحة، شبكة منقطة.' } },
+  { id: 'p1', code: 'LMP-01', category: 'Home', price: 1450, imageUrl: '', videoUrl: '', name: { en: 'Cedar desk lamp', ar: 'Ù…ØµØ¨Ø§Ø­ Ù…ÙƒØªØ¨ Ø®Ø´Ø¨ Ø§Ù„Ø£Ø±Ø²' }, desc: { en: 'Warm brass fitting, adjustable arm.', ar: 'ØªØ±ÙƒÙŠØ¨ Ù†Ø­Ø§Ø³ÙŠ Ø¯Ø§ÙØ¦ØŒ Ø°Ø±Ø§Ø¹ Ù‚Ø§Ø¨Ù„ Ù„Ù„ØªØ¹Ø¯ÙŠÙ„.' } },
+  { id: 'p2', code: 'CFF-01', category: 'Kitchen', price: 620, imageUrl: '', videoUrl: '', name: { en: 'Pour-over coffee set', ar: 'Ø·Ù‚Ù… Ù‚Ù‡ÙˆØ© Ù…Ù‚Ø·Ø±Ø© ÙŠØ¯ÙˆÙŠÙ‹Ø§' }, desc: { en: 'Ceramic dripper, glass carafe.', ar: 'Ù…ØµÙØ§Ø© Ø³ÙŠØ±Ø§Ù…ÙŠÙƒØŒ Ø¥Ø¨Ø±ÙŠÙ‚ Ø²Ø¬Ø§Ø¬ÙŠ.' } },
+  { id: 'p3', code: 'WTC-01', category: 'Accessories', price: 2300, imageUrl: '', videoUrl: '', name: { en: 'Field watch', ar: 'Ø³Ø§Ø¹Ø© Ù…ÙŠØ¯Ø§Ù†ÙŠØ©' }, desc: { en: 'Stainless case, canvas strap.', ar: 'Ù‡ÙŠÙƒÙ„ Ø³ØªØ§Ù†Ù„Ø³ØŒ Ø³ÙˆØ§Ø± Ù‚Ù…Ø§Ø´ÙŠ.' } },
+  { id: 'p4', code: 'BAG-01', category: 'Accessories', price: 980, imageUrl: '', videoUrl: '', name: { en: 'Canvas day pack', ar: 'Ø­Ù‚ÙŠØ¨Ø© Ø¸Ù‡Ø± Ù‚Ù…Ø§Ø´ÙŠØ©' }, desc: { en: 'Water-resistant, leather trims.', ar: 'Ù…Ù‚Ø§ÙˆÙ…Ø© Ù„Ù„Ù…Ø§Ø¡ØŒ Ø­ÙˆØ§Ù Ø¬Ù„Ø¯ÙŠØ©.' } },
+  { id: 'p5', code: 'AUD-01', category: 'Electronics', price: 1750, imageUrl: '', videoUrl: '', name: { en: 'Studio headphones', ar: 'Ø³Ù…Ø§Ø¹Ø§Øª Ø§Ø³ØªÙˆØ¯ÙŠÙˆ' }, desc: { en: 'Over-ear, foldable frame.', ar: 'Ù…Ø­ÙŠØ·Ø© Ø¨Ø§Ù„Ø£Ø°Ù†ØŒ Ù‡ÙŠÙƒÙ„ Ù‚Ø§Ø¨Ù„ Ù„Ù„Ø·ÙŠ.' } },
+  { id: 'p6', code: 'BOK-01', category: 'Stationery', price: 340, imageUrl: '', videoUrl: '', name: { en: 'Leather journal', ar: 'Ø¯ÙØªØ± Ø¬Ù„Ø¯ÙŠ' }, desc: { en: '200 pages, dotted grid.', ar: 'Ù¢Ù Ù  ØµÙØ­Ø©ØŒ Ø´Ø¨ÙƒØ© Ù…Ù†Ù‚Ø·Ø©.' } },
 ];
 
 /* ---------------------------------------------------------------------
-   ICONS — small hand-rolled SVGs, no external icon library needed.
+   ICONS â€” small hand-rolled SVGs, no external icon library needed.
 --------------------------------------------------------------------- */
 const ICON_PATHS = {
   phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>',
@@ -66,18 +66,18 @@ function icon(name, size = 16, extraClass = '') {
 --------------------------------------------------------------------- */
 const STRINGS = {
   en: {
-    brand: 'Buy', tagline: 'A stamped ticket for every order — simple and honest.',
+    brand: 'Buy', tagline: 'A stamped ticket for every order â€” simple and honest.',
     buy: 'Buy', modal_title: 'Fill your ticket',
-    search_ph: 'Search products…', filter_all: 'All Categories',
+    search_ph: 'Search productsâ€¦', filter_all: 'All Categories',
     category_label: 'Category', code_label: 'Product Code',
     edit: 'Edit', save_changes: 'Save changes', edit_product_title: 'Edit Product',
     phone1: 'Phone number', phone2: 'Second phone (optional)',
-    location: 'Delivery location', location_ph: 'Neighborhood, street, landmark…',
-    use_location: 'Use my current location', locating: 'Locating…',
+    location: 'Delivery location', location_ph: 'Neighborhood, street, landmarkâ€¦',
+    use_location: 'Use my current location', locating: 'Locatingâ€¦',
     location_denied: "Couldn't get your location. Type it in instead.",
     notes: 'Notes', add_note: 'Add a note', note_ph: 'e.g. Call before arriving',
     cod_note: 'Pay in cash when your order arrives.',
-    submit: 'Stamp my order', submitting: 'Stamping…', cancel: 'Cancel',
+    submit: 'Stamp my order', submitting: 'Stampingâ€¦', cancel: 'Cancel',
     required: 'Phone number and location are required.',
     phone_invalid: 'Enter an 11-digit number like 01226754491.',
     success_title: 'Order stamped', success_body: 'Ticket number',
@@ -89,7 +89,7 @@ const STRINGS = {
     mark_done: 'Mark as done', mark_pending: 'Mark as pending',
     undo_ticket: 'Cancel this order', undo_ask: 'Cancel this order?', undo_yes: 'Yes, cancel it', undo_keep: 'Never mind',
     support_label: 'Need help with this order?', call_support: 'Call support',
-    guest_label: 'Guest', loading: 'Loading…',
+    guest_label: 'Guest', loading: 'Loadingâ€¦',
     product_name_en: 'Name (English)', product_name_ar: 'Name (Arabic)',
     product_desc_en: 'Description (English)', product_desc_ar: 'Description (Arabic)',
     product_price: 'Price (EGP)', image_url_label: 'Image URL', video_url_label: 'Video URL (optional)',
@@ -111,55 +111,55 @@ const STRINGS = {
     my_orders_empty_body: 'Orders you place while signed in will show up here.',
   },
   ar: {
-    brand: 'اشترِ', tagline: 'تذكرة مختومة لكل طلب — بسيطة وصادقة.',
-    buy: 'اشترِ', modal_title: 'املأ تذكرتك',
-    search_ph: 'ابحث عن منتج…', filter_all: 'كل الفئات',
-    category_label: 'الفئة', code_label: 'كود المنتج',
-    edit: 'تعديل', save_changes: 'حفظ التغييرات', edit_product_title: 'تعديل منتج',
-    phone1: 'رقم الهاتف', phone2: 'رقم هاتف ثانٍ (اختياري)',
-    location: 'موقع التوصيل', location_ph: 'الحي، الشارع، أقرب معلم…',
-    use_location: 'استخدم موقعي الحالي', locating: 'جارٍ تحديد الموقع…',
-    location_denied: 'تعذّر تحديد موقعك. اكتبه يدويًا.',
-    notes: 'ملاحظات', add_note: 'إضافة ملاحظة', note_ph: 'مثال: اتصل قبل الوصول',
-    cod_note: 'الدفع نقدًا عند استلام الطلب.',
-    submit: 'اختم طلبي', submitting: 'جارٍ الختم…', cancel: 'إلغاء',
-    required: 'رقم الهاتف والموقع مطلوبان.',
-    phone_invalid: 'أدخل رقمًا مكونًا من ١١ رقمًا مثل 01226754491.',
-    success_title: 'تم ختم الطلب', success_body: 'رقم التذكرة',
-    success_sub: 'سنتواصل معك على الرقم الذي أدخلته.', back_to_shop: 'العودة للمتجر',
-    admin_title: 'السجل', admin_tab_orders: 'الطلبات', admin_tab_products: 'المنتجات',
-    admin_empty_title: 'لا توجد تذاكر بعد', admin_empty_body: 'ستظهر الطلبات الجديدة هنا فور ختمها.',
-    col_ticket: 'التذكرة', col_product: 'المنتج', col_buyer: 'المشتري', col_phones: 'الهواتف', col_location: 'الموقع', col_notes: 'ملاحظات', col_time: 'الوقت', col_status: 'الحالة',
-    status_pending: 'قيد الانتظار', status_done: 'تم التنفيذ', status_cancelled: 'ملغي',
-    mark_done: 'تحديد كمكتمل', mark_pending: 'إعادة إلى الانتظار',
-    undo_ticket: 'إلغاء الطلب', undo_ask: 'هل تريد إلغاء هذا الطلب؟', undo_yes: 'نعم، ألغِ الطلب', undo_keep: 'تراجع',
-    support_label: 'تحتاج مساعدة بخصوص هذا الطلب؟', call_support: 'اتصل بالدعم',
-    guest_label: 'زائر', loading: 'جارٍ التحميل…',
-    product_name_en: 'الاسم (إنجليزي)', product_name_ar: 'الاسم (عربي)',
-    product_desc_en: 'الوصف (إنجليزي)', product_desc_ar: 'الوصف (عربي)',
-    product_price: 'السعر (جنيه)', image_url_label: 'رابط الصورة', video_url_label: 'رابط الفيديو (اختياري)',
-    watch_video: 'مشاهدة الفيديو',
-    add_product: 'إضافة منتج', product_fields_required: 'أدخل الاسمين والسعر قبل الإضافة.',
-    no_products: 'لا توجد منتجات بعد. أضف أول منتج بالأسفل.',
-    remove: 'إزالة', yes_remove: 'نعم، إزالة', keep: 'الاحتفاظ به', new_product_title: 'إضافة منتج',
-    sign_in: 'تسجيل الدخول', tab_signup: 'إنشاء حساب', tab_login: 'تسجيل الدخول',
-    continue_with_google: 'المتابعة عبر جوجل', or_divider: 'أو',
-    name_label: 'الاسم الكامل', email_label: 'البريد الإلكتروني', phone_field_optional: 'رقم الهاتف (اختياري)', password_label: 'كلمة المرور',
-    create_account_btn: 'إنشاء الحساب', log_in_btn: 'تسجيل الدخول',
-    switch_to_login: 'لديك حساب بالفعل؟ سجّل الدخول', switch_to_signup: 'ليس لديك حساب؟ أنشئ حسابًا',
-    signup_error_exists: 'يوجد حساب بهذا البريد الإلكتروني بالفعل.',
-    login_error_missing: 'لم نعثر على حساب بهذا البريد الإلكتروني.',
-    name_email_required: 'الاسم والبريد الإلكتروني مطلوبان.', email_required: 'البريد الإلكتروني مطلوب.',
-    password_required: 'يجب ألا تقل كلمة المرور عن ٦ أحرف.', wrong_password: 'كلمة المرور غير صحيحة.',
-    my_orders_link: 'طلباتي', admin_ledger_link: 'سجل الإدارة', log_out_link: 'تسجيل الخروج',
-    my_orders_title: 'طلباتي', my_orders_empty_title: 'لا توجد طلبات بعد',
-    my_orders_empty_body: 'ستظهر هنا الطلبات التي تقوم بها أثناء تسجيل الدخول.',
+    brand: 'Ø§Ø´ØªØ±Ù', tagline: 'ØªØ°ÙƒØ±Ø© Ù…Ø®ØªÙˆÙ…Ø© Ù„ÙƒÙ„ Ø·Ù„Ø¨ â€” Ø¨Ø³ÙŠØ·Ø© ÙˆØµØ§Ø¯Ù‚Ø©.',
+    buy: 'Ø§Ø´ØªØ±Ù', modal_title: 'Ø§Ù…Ù„Ø£ ØªØ°ÙƒØ±ØªÙƒ',
+    search_ph: 'Ø§Ø¨Ø­Ø« Ø¹Ù† Ù…Ù†ØªØ¬â€¦', filter_all: 'ÙƒÙ„ Ø§Ù„ÙØ¦Ø§Øª',
+    category_label: 'Ø§Ù„ÙØ¦Ø©', code_label: 'ÙƒÙˆØ¯ Ø§Ù„Ù…Ù†ØªØ¬',
+    edit: 'ØªØ¹Ø¯ÙŠÙ„', save_changes: 'Ø­ÙØ¸ Ø§Ù„ØªØºÙŠÙŠØ±Ø§Øª', edit_product_title: 'ØªØ¹Ø¯ÙŠÙ„ Ù…Ù†ØªØ¬',
+    phone1: 'Ø±Ù‚Ù… Ø§Ù„Ù‡Ø§ØªÙ', phone2: 'Ø±Ù‚Ù… Ù‡Ø§ØªÙ Ø«Ø§Ù†Ù (Ø§Ø®ØªÙŠØ§Ø±ÙŠ)',
+    location: 'Ù…ÙˆÙ‚Ø¹ Ø§Ù„ØªÙˆØµÙŠÙ„', location_ph: 'Ø§Ù„Ø­ÙŠØŒ Ø§Ù„Ø´Ø§Ø±Ø¹ØŒ Ø£Ù‚Ø±Ø¨ Ù…Ø¹Ù„Ù…â€¦',
+    use_location: 'Ø§Ø³ØªØ®Ø¯Ù… Ù…ÙˆÙ‚Ø¹ÙŠ Ø§Ù„Ø­Ø§Ù„ÙŠ', locating: 'Ø¬Ø§Ø±Ù ØªØ­Ø¯ÙŠØ¯ Ø§Ù„Ù…ÙˆÙ‚Ø¹â€¦',
+    location_denied: 'ØªØ¹Ø°Ù‘Ø± ØªØ­Ø¯ÙŠØ¯ Ù…ÙˆÙ‚Ø¹Ùƒ. Ø§ÙƒØªØ¨Ù‡ ÙŠØ¯ÙˆÙŠÙ‹Ø§.',
+    notes: 'Ù…Ù„Ø§Ø­Ø¸Ø§Øª', add_note: 'Ø¥Ø¶Ø§ÙØ© Ù…Ù„Ø§Ø­Ø¸Ø©', note_ph: 'Ù…Ø«Ø§Ù„: Ø§ØªØµÙ„ Ù‚Ø¨Ù„ Ø§Ù„ÙˆØµÙˆÙ„',
+    cod_note: 'Ø§Ù„Ø¯ÙØ¹ Ù†Ù‚Ø¯Ù‹Ø§ Ø¹Ù†Ø¯ Ø§Ø³ØªÙ„Ø§Ù… Ø§Ù„Ø·Ù„Ø¨.',
+    submit: 'Ø§Ø®ØªÙ… Ø·Ù„Ø¨ÙŠ', submitting: 'Ø¬Ø§Ø±Ù Ø§Ù„Ø®ØªÙ…â€¦', cancel: 'Ø¥Ù„ØºØ§Ø¡',
+    required: 'Ø±Ù‚Ù… Ø§Ù„Ù‡Ø§ØªÙ ÙˆØ§Ù„Ù…ÙˆÙ‚Ø¹ Ù…Ø·Ù„ÙˆØ¨Ø§Ù†.',
+    phone_invalid: 'Ø£Ø¯Ø®Ù„ Ø±Ù‚Ù…Ù‹Ø§ Ù…ÙƒÙˆÙ†Ù‹Ø§ Ù…Ù† Ù¡Ù¡ Ø±Ù‚Ù…Ù‹Ø§ Ù…Ø«Ù„ 01226754491.',
+    success_title: 'ØªÙ… Ø®ØªÙ… Ø§Ù„Ø·Ù„Ø¨', success_body: 'Ø±Ù‚Ù… Ø§Ù„ØªØ°ÙƒØ±Ø©',
+    success_sub: 'Ø³Ù†ØªÙˆØ§ØµÙ„ Ù…Ø¹Ùƒ Ø¹Ù„Ù‰ Ø§Ù„Ø±Ù‚Ù… Ø§Ù„Ø°ÙŠ Ø£Ø¯Ø®Ù„ØªÙ‡.', back_to_shop: 'Ø§Ù„Ø¹ÙˆØ¯Ø© Ù„Ù„Ù…ØªØ¬Ø±',
+    admin_title: 'Ø§Ù„Ø³Ø¬Ù„', admin_tab_orders: 'Ø§Ù„Ø·Ù„Ø¨Ø§Øª', admin_tab_products: 'Ø§Ù„Ù…Ù†ØªØ¬Ø§Øª',
+    admin_empty_title: 'Ù„Ø§ ØªÙˆØ¬Ø¯ ØªØ°Ø§ÙƒØ± Ø¨Ø¹Ø¯', admin_empty_body: 'Ø³ØªØ¸Ù‡Ø± Ø§Ù„Ø·Ù„Ø¨Ø§Øª Ø§Ù„Ø¬Ø¯ÙŠØ¯Ø© Ù‡Ù†Ø§ ÙÙˆØ± Ø®ØªÙ…Ù‡Ø§.',
+    col_ticket: 'Ø§Ù„ØªØ°ÙƒØ±Ø©', col_product: 'Ø§Ù„Ù…Ù†ØªØ¬', col_buyer: 'Ø§Ù„Ù…Ø´ØªØ±ÙŠ', col_phones: 'Ø§Ù„Ù‡ÙˆØ§ØªÙ', col_location: 'Ø§Ù„Ù…ÙˆÙ‚Ø¹', col_notes: 'Ù…Ù„Ø§Ø­Ø¸Ø§Øª', col_time: 'Ø§Ù„ÙˆÙ‚Øª', col_status: 'Ø§Ù„Ø­Ø§Ù„Ø©',
+    status_pending: 'Ù‚ÙŠØ¯ Ø§Ù„Ø§Ù†ØªØ¸Ø§Ø±', status_done: 'ØªÙ… Ø§Ù„ØªÙ†ÙÙŠØ°', status_cancelled: 'Ù…Ù„ØºÙŠ',
+    mark_done: 'ØªØ­Ø¯ÙŠØ¯ ÙƒÙ…ÙƒØªÙ…Ù„', mark_pending: 'Ø¥Ø¹Ø§Ø¯Ø© Ø¥Ù„Ù‰ Ø§Ù„Ø§Ù†ØªØ¸Ø§Ø±',
+    undo_ticket: 'Ø¥Ù„ØºØ§Ø¡ Ø§Ù„Ø·Ù„Ø¨', undo_ask: 'Ù‡Ù„ ØªØ±ÙŠØ¯ Ø¥Ù„ØºØ§Ø¡ Ù‡Ø°Ø§ Ø§Ù„Ø·Ù„Ø¨ØŸ', undo_yes: 'Ù†Ø¹Ù…ØŒ Ø£Ù„ØºÙ Ø§Ù„Ø·Ù„Ø¨', undo_keep: 'ØªØ±Ø§Ø¬Ø¹',
+    support_label: 'ØªØ­ØªØ§Ø¬ Ù…Ø³Ø§Ø¹Ø¯Ø© Ø¨Ø®ØµÙˆØµ Ù‡Ø°Ø§ Ø§Ù„Ø·Ù„Ø¨ØŸ', call_support: 'Ø§ØªØµÙ„ Ø¨Ø§Ù„Ø¯Ø¹Ù…',
+    guest_label: 'Ø²Ø§Ø¦Ø±', loading: 'Ø¬Ø§Ø±Ù Ø§Ù„ØªØ­Ù…ÙŠÙ„â€¦',
+    product_name_en: 'Ø§Ù„Ø§Ø³Ù… (Ø¥Ù†Ø¬Ù„ÙŠØ²ÙŠ)', product_name_ar: 'Ø§Ù„Ø§Ø³Ù… (Ø¹Ø±Ø¨ÙŠ)',
+    product_desc_en: 'Ø§Ù„ÙˆØµÙ (Ø¥Ù†Ø¬Ù„ÙŠØ²ÙŠ)', product_desc_ar: 'Ø§Ù„ÙˆØµÙ (Ø¹Ø±Ø¨ÙŠ)',
+    product_price: 'Ø§Ù„Ø³Ø¹Ø± (Ø¬Ù†ÙŠÙ‡)', image_url_label: 'Ø±Ø§Ø¨Ø· Ø§Ù„ØµÙˆØ±Ø©', video_url_label: 'Ø±Ø§Ø¨Ø· Ø§Ù„ÙÙŠØ¯ÙŠÙˆ (Ø§Ø®ØªÙŠØ§Ø±ÙŠ)',
+    watch_video: 'Ù…Ø´Ø§Ù‡Ø¯Ø© Ø§Ù„ÙÙŠØ¯ÙŠÙˆ',
+    add_product: 'Ø¥Ø¶Ø§ÙØ© Ù…Ù†ØªØ¬', product_fields_required: 'Ø£Ø¯Ø®Ù„ Ø§Ù„Ø§Ø³Ù…ÙŠÙ† ÙˆØ§Ù„Ø³Ø¹Ø± Ù‚Ø¨Ù„ Ø§Ù„Ø¥Ø¶Ø§ÙØ©.',
+    no_products: 'Ù„Ø§ ØªÙˆØ¬Ø¯ Ù…Ù†ØªØ¬Ø§Øª Ø¨Ø¹Ø¯. Ø£Ø¶Ù Ø£ÙˆÙ„ Ù…Ù†ØªØ¬ Ø¨Ø§Ù„Ø£Ø³ÙÙ„.',
+    remove: 'Ø¥Ø²Ø§Ù„Ø©', yes_remove: 'Ù†Ø¹Ù…ØŒ Ø¥Ø²Ø§Ù„Ø©', keep: 'Ø§Ù„Ø§Ø­ØªÙØ§Ø¸ Ø¨Ù‡', new_product_title: 'Ø¥Ø¶Ø§ÙØ© Ù…Ù†ØªØ¬',
+    sign_in: 'ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„', tab_signup: 'Ø¥Ù†Ø´Ø§Ø¡ Ø­Ø³Ø§Ø¨', tab_login: 'ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„',
+    continue_with_google: 'Ø§Ù„Ù…ØªØ§Ø¨Ø¹Ø© Ø¹Ø¨Ø± Ø¬ÙˆØ¬Ù„', or_divider: 'Ø£Ùˆ',
+    name_label: 'Ø§Ù„Ø§Ø³Ù… Ø§Ù„ÙƒØ§Ù…Ù„', email_label: 'Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ', phone_field_optional: 'Ø±Ù‚Ù… Ø§Ù„Ù‡Ø§ØªÙ (Ø§Ø®ØªÙŠØ§Ø±ÙŠ)', password_label: 'ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±',
+    create_account_btn: 'Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„Ø­Ø³Ø§Ø¨', log_in_btn: 'ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„',
+    switch_to_login: 'Ù„Ø¯ÙŠÙƒ Ø­Ø³Ø§Ø¨ Ø¨Ø§Ù„ÙØ¹Ù„ØŸ Ø³Ø¬Ù‘Ù„ Ø§Ù„Ø¯Ø®ÙˆÙ„', switch_to_signup: 'Ù„ÙŠØ³ Ù„Ø¯ÙŠÙƒ Ø­Ø³Ø§Ø¨ØŸ Ø£Ù†Ø´Ø¦ Ø­Ø³Ø§Ø¨Ù‹Ø§',
+    signup_error_exists: 'ÙŠÙˆØ¬Ø¯ Ø­Ø³Ø§Ø¨ Ø¨Ù‡Ø°Ø§ Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ Ø¨Ø§Ù„ÙØ¹Ù„.',
+    login_error_missing: 'Ù„Ù… Ù†Ø¹Ø«Ø± Ø¹Ù„Ù‰ Ø­Ø³Ø§Ø¨ Ø¨Ù‡Ø°Ø§ Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ.',
+    name_email_required: 'Ø§Ù„Ø§Ø³Ù… ÙˆØ§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ Ù…Ø·Ù„ÙˆØ¨Ø§Ù†.', email_required: 'Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ Ù…Ø·Ù„ÙˆØ¨.',
+    password_required: 'ÙŠØ¬Ø¨ Ø£Ù„Ø§ ØªÙ‚Ù„ ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ± Ø¹Ù† Ù¦ Ø£Ø­Ø±Ù.', wrong_password: 'ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ± ØºÙŠØ± ØµØ­ÙŠØ­Ø©.',
+    my_orders_link: 'Ø·Ù„Ø¨Ø§ØªÙŠ', admin_ledger_link: 'Ø³Ø¬Ù„ Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©', log_out_link: 'ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø®Ø±ÙˆØ¬',
+    my_orders_title: 'Ø·Ù„Ø¨Ø§ØªÙŠ', my_orders_empty_title: 'Ù„Ø§ ØªÙˆØ¬Ø¯ Ø·Ù„Ø¨Ø§Øª Ø¨Ø¹Ø¯',
+    my_orders_empty_body: 'Ø³ØªØ¸Ù‡Ø± Ù‡Ù†Ø§ Ø§Ù„Ø·Ù„Ø¨Ø§Øª Ø§Ù„ØªÙŠ ØªÙ‚ÙˆÙ… Ø¨Ù‡Ø§ Ø£Ø«Ù†Ø§Ø¡ ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„.',
   },
 };
 
 /* ---------------------------------------------------------------------
    DATABASE (Firestore-backed)
-   Each product/order is its own document — never one big blob — so two
+   Each product/order is its own document â€” never one big blob â€” so two
    people writing at the same time can't clobber each other's data.
 --------------------------------------------------------------------- */
 const DB = {
@@ -291,7 +291,7 @@ function renderHeader() {
         <span class="brand-name">${escapeHtml(t('brand'))}</span>
       </div>
       <div class="header-actions">
-        <button class="pill-btn" data-action="toggle-lang">${icon('globe', 14)} ${state.lang === 'en' ? 'العربية' : 'English'}</button>
+        <button class="pill-btn" data-action="toggle-lang">${icon('globe', 14)} ${state.lang === 'en' ? 'Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©' : 'English'}</button>
         ${accountHtml}
       </div>
     </header>`;
@@ -483,7 +483,7 @@ function renderOrdersTab() {
       <td style="max-width:160px">${o.buyerName ? `<div>${escapeHtml(o.buyerName)}</div><div class="sub-cell">${escapeHtml(o.buyerEmail)}</div>` : `<span style="color:var(--ink-soft)">${t('guest_label')}</span>`}</td>
       <td style="white-space:nowrap"><div>${escapeHtml(o.phone1)}</div>${o.phone2 ? `<div class="sub-cell">${escapeHtml(o.phone2)}</div>` : ''}</td>
       <td style="max-width:180px">${escapeHtml(o.location)}</td>
-      <td style="max-width:200px;color:var(--ink-soft)">${o.notes && o.notes.length ? o.notes.map(escapeHtml).join(' · ') : '—'}</td>
+      <td style="max-width:200px;color:var(--ink-soft)">${o.notes && o.notes.length ? o.notes.map(escapeHtml).join(' Â· ') : 'â€”'}</td>
       <td style="white-space:nowrap;color:var(--ink-soft);font-size:12px">${formatTime(o.timestamp)}</td>
       <td style="white-space:nowrap">
         <span class="status-badge status-${status}">${t('status_' + status)}</span>
@@ -557,8 +557,8 @@ function renderProductsTab() {
         <div class="field"><label>${t('product_price')}</label><input class="input" id="np-price" type="number" min="0"/></div>
         <div class="field"><label>${t('code_label')}</label><input class="input" id="np-code"/></div>
         <div class="field"><label>${t('category_label')}</label><input class="input" id="np-category"/></div>
-        <div class="field"><label>${t('image_url_label')}</label><input class="input" id="np-image" placeholder="https://…"/></div>
-        <div class="field" style="grid-column:1/-1"><label>${t('video_url_label')}</label><input class="input" id="np-video" placeholder="https://…"/></div>
+        <div class="field"><label>${t('image_url_label')}</label><input class="input" id="np-image" placeholder="https://â€¦"/></div>
+        <div class="field" style="grid-column:1/-1"><label>${t('video_url_label')}</label><input class="input" id="np-video" placeholder="https://â€¦"/></div>
       </div>
       <div id="np-error" class="error-text" hidden></div>
       <button class="brass-btn" data-action="add-product" style="margin-top:6px">${icon('plus', 14)} ${t('add_product')}</button>
@@ -836,7 +836,7 @@ function openAuthModal(mode = 'login') {
     wrap.innerHTML = `
       ${m === 'signup' ? `<div class="field"><label>${t('name_label')} <span class="req">*</span></label><input class="input" id="auth-name"/></div>` : ''}
       <div class="field"><label>${t('email_label')} <span class="req">*</span></label><input class="input" id="auth-email" type="email" placeholder="name@email.com"/></div>
-      <div class="field"><label>${t('password_label')} <span class="req">*</span></label><input class="input" id="auth-password" type="password" placeholder="••••••••"/></div>
+      <div class="field"><label>${t('password_label')} <span class="req">*</span></label><input class="input" id="auth-password" type="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"/></div>
       ${m === 'signup' ? `<div class="field"><label>${t('phone_field_optional')}</label><input class="input" id="auth-phone" type="tel" inputmode="numeric" maxlength="11" placeholder="01226754491"/></div>` : ''}
     `;
   }
@@ -934,7 +934,7 @@ async function loginWithGoogle() {
     return { ok: true };
   } catch (e) {
     if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
-      return { ok: false, error: '' }; // they just closed the popup — no need to alarm them
+      return { ok: false, error: '' }; // they just closed the popup â€” no need to alarm them
     }
     return { ok: false, error: authErrorMessage(e) };
   }

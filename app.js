@@ -66,18 +66,18 @@ function icon(name, size = 16, extraClass = '') {
 --------------------------------------------------------------------- */
 const STRINGS = {
   en: {
-    brand: 'Buy', tagline: 'A stamped ticket for every order â€” simple and honest.',
+    brand: 'Buy', tagline: 'A stamped ticket for every order — simple and honest.',
     buy: 'Buy', modal_title: 'Fill your ticket',
-    search_ph: 'Search productsâ€¦', filter_all: 'All Categories',
+    search_ph: 'Search products…', filter_all: 'All Categories',
     category_label: 'Category', code_label: 'Product Code',
     edit: 'Edit', save_changes: 'Save changes', edit_product_title: 'Edit Product',
     phone1: 'Phone number', phone2: 'Second phone (optional)',
-    location: 'Delivery location', location_ph: 'Neighborhood, street, landmarkâ€¦',
-    use_location: 'Use my current location', locating: 'Locatingâ€¦',
+    location: 'Delivery location', location_ph: 'Neighborhood, street, landmark…',
+    use_location: 'Use my current location', locating: 'Locating…',
     location_denied: "Couldn't get your location. Type it in instead.",
     notes: 'Notes', add_note: 'Add a note', note_ph: 'e.g. Call before arriving',
     cod_note: 'Pay in cash when your order arrives.',
-    submit: 'Stamp my order', submitting: 'Stampingâ€¦', cancel: 'Cancel',
+    submit: 'Stamp my order', submitting: 'Stamping…', cancel: 'Cancel',
     required: 'Phone number and location are required.',
     phone_invalid: 'Enter an 11-digit number like 01226754491.',
     success_title: 'Order stamped', success_body: 'Ticket number',
@@ -89,7 +89,7 @@ const STRINGS = {
     mark_done: 'Mark as done', mark_pending: 'Mark as pending',
     undo_ticket: 'Cancel this order', undo_ask: 'Cancel this order?', undo_yes: 'Yes, cancel it', undo_keep: 'Never mind',
     support_label: 'Need help with this order?', call_support: 'Call support',
-    guest_label: 'Guest', loading: 'Loadingâ€¦',
+    guest_label: 'Guest', loading: 'Loading…',
     product_name_en: 'Name (English)', product_name_ar: 'Name (Arabic)',
     product_desc_en: 'Description (English)', product_desc_ar: 'Description (Arabic)',
     product_price: 'Price (EGP)', image_url_label: 'Image URL', video_url_label: 'Video URL (optional)',
@@ -121,7 +121,7 @@ const STRINGS = {
     use_location: 'استخدم موقعي الحالي', locating: 'جاري تحديد الموقع…',
     location_denied: 'تعذّر تحديد موقعك. اكتبه يدويًا.',
     notes: 'ملاحظات', add_note: 'إضافة ملاحظة', note_ph: 'مثال: اتصل قبل الوصول',
-    cod_note: 'الدفع نقدًا عند استلاستلام الطلب.',
+    cod_note: 'الدفع نقدًا عند استلام الطلب.',
     submit: 'اختم طلبي', submitting: 'جاري الختم…', cancel: 'إلغاء',
     required: 'رقم الهاتف والموقع مطلوبان.',
     phone_invalid: 'أدخل رقمًا مكونًا من ١١ رقمًا مثل 01226754491.',
@@ -154,7 +154,7 @@ const STRINGS = {
     my_orders_link: 'طلباتي', admin_ledger_link: 'سجل الإدارة', log_out_link: 'تسجيل الخروج',
     my_orders_title: 'طلباتي', my_orders_empty_title: 'لا توجد طلبات بعد',
     my_orders_empty_body: 'ستظهر هنا الطلبات التي تقوم بها أثناء تسجيل الدخول.',
-   },
+  }
 };
 
 /* ---------------------------------------------------------------------

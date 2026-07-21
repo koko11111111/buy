@@ -184,6 +184,8 @@ a { color: inherit; }
 .hero h1 { font-size: 30px; font-weight: 700; max-width: 560px; }
 [dir="ltr"] .hero h1 { font-style: italic; }
 
+.shop-filters { display: flex; gap: 10px; }
+
 .loading-row {
   display: flex;
   align-items: center;
@@ -364,6 +366,7 @@ tbody tr:last-child td { border-bottom: none; }
 @media (max-width: 480px) {
   .header { padding: 14px 16px; }
   .hero { padding: 28px 16px 16px; }
+  .shop-filters { flex-direction: column; }
   .product-grid { padding: 8px 16px 32px; grid-template-columns: 1fr; }
   .page { padding: 16px; }
 }

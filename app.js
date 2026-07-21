@@ -866,6 +866,7 @@ onAuthStateChanged(auth, async (fbUser) => {
    ADMIN ACTIONS
 --------------------------------------------------------------------- */
 async function addProductFromForm() {
+  const code = document.getElementById('np-code').value.trim().toUpperCase(); // Stores whatever you typed
   const nameEn = document.getElementById('np-name-en').value.trim();
   const nameAr = document.getElementById('np-name-ar').value.trim();
   const descEn = document.getElementById('np-desc-en').value.trim();
@@ -881,7 +882,16 @@ async function addProductFromForm() {
     errEl.hidden = false;
     return;
   }
-  const product = { id: makeId('p'), price, imageUrl, videoUrl, name: { en: nameEn, ar: nameAr }, desc: { en: descEn, ar: descAr } };
+
+  const product = { 
+    id: makeId('p'), 
+    code: code || '', // Keeps your typed code (or blank if you didn't enter one)
+    price, 
+    imageUrl, 
+    videoUrl, 
+    name: { en: nameEn, ar: nameAr }, 
+    desc: { en: descEn, ar: descAr } 
+  };
 
   if (addBtn) addBtn.disabled = true;
   try {

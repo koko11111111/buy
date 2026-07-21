@@ -1,4 +1,4 @@
-/* =====================================================================
+//* =====================================================================
    BUY — a bilingual (EN/AR) product ordering site with accounts and an
    admin panel, built with plain HTML/CSS/JS + Firebase.
 
@@ -14,7 +14,7 @@ import {
   onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup,
 } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js';
 import {
-  collection, doc, setDoc, getDoc, getDocs, deleteDoc, updateDoc, query, where, orderBy,
+  collection, doc, setDoc, getDoc, getDocs, deleteDoc, updateDoc, query, where,
 } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js';
 
 /* ---------------------------------------------------------------------
@@ -25,12 +25,12 @@ const SUPPORT_PHONE = '01226754491';
 const PHONE_PATTERN = /^01[0125]\d{8}$/; // Egyptian mobile: 01 + network digit + 8 digits, 11 total
 
 const DEFAULT_PRODUCTS = [
-  { id: 'p1', price: 1450, imageUrl: '', videoUrl: '', name: { en: 'Cedar desk lamp', ar: 'مصباح مكتب خشب الأرز' }, desc: { en: 'Warm brass fitting, adjustable arm.', ar: 'تركيب نحاسي دافئ، ذراع قابل للتعديل.' } },
-  { id: 'p2', price: 620, imageUrl: '', videoUrl: '', name: { en: 'Pour-over coffee set', ar: 'طقم قهوة مقطرة يدويًا' }, desc: { en: 'Ceramic dripper, glass carafe.', ar: 'مصفاة سيراميك، إبريق زجاجي.' } },
-  { id: 'p3', price: 2300, imageUrl: '', videoUrl: '', name: { en: 'Field watch', ar: 'ساعة ميدانية' }, desc: { en: 'Stainless case, canvas strap.', ar: 'هيكل ستانلس، سوار قماشي.' } },
-  { id: 'p4', price: 980, imageUrl: '', videoUrl: '', name: { en: 'Canvas day pack', ar: 'حقيبة ظهر قماشية' }, desc: { en: 'Water-resistant, leather trims.', ar: 'مقاومة للماء، حواف جلدية.' } },
-  { id: 'p5', price: 1750, imageUrl: '', videoUrl: '', name: { en: 'Studio headphones', ar: 'سماعات استوديو' }, desc: { en: 'Over-ear, foldable frame.', ar: 'محيطة بالأذن، هيكل قابل للطي.' } },
-  { id: 'p6', price: 340, imageUrl: '', videoUrl: '', name: { en: 'Leather journal', ar: 'دفتر جلدي' }, desc: { en: '200 pages, dotted grid.', ar: '٢٠٠ صفحة، شبكة منقطة.' } },
+  { id: 'p1', code: 'LMP-01', category: 'Home', price: 1450, imageUrl: '', videoUrl: '', name: { en: 'Cedar desk lamp', ar: 'مصباح مكتب خشب الأرز' }, desc: { en: 'Warm brass fitting, adjustable arm.', ar: 'تركيب نحاسي دافئ، ذراع قابل للتعديل.' } },
+  { id: 'p2', code: 'CFF-01', category: 'Kitchen', price: 620, imageUrl: '', videoUrl: '', name: { en: 'Pour-over coffee set', ar: 'طقم قهوة مقطرة يدويًا' }, desc: { en: 'Ceramic dripper, glass carafe.', ar: 'مصفاة سيراميك، إبريق زجاجي.' } },
+  { id: 'p3', code: 'WTC-01', category: 'Accessories', price: 2300, imageUrl: '', videoUrl: '', name: { en: 'Field watch', ar: 'ساعة ميدانية' }, desc: { en: 'Stainless case, canvas strap.', ar: 'هيكل ستانلس، سوار قماشي.' } },
+  { id: 'p4', code: 'BAG-01', category: 'Accessories', price: 980, imageUrl: '', videoUrl: '', name: { en: 'Canvas day pack', ar: 'حقيبة ظهر قماشية' }, desc: { en: 'Water-resistant, leather trims.', ar: 'مقاومة للماء، حواف جلدية.' } },
+  { id: 'p5', code: 'AUD-01', category: 'Electronics', price: 1750, imageUrl: '', videoUrl: '', name: { en: 'Studio headphones', ar: 'سماعات استوديو' }, desc: { en: 'Over-ear, foldable frame.', ar: 'محيطة بالأذن، هيكل قابل للطي.' } },
+  { id: 'p6', code: 'BOK-01', category: 'Stationery', price: 340, imageUrl: '', videoUrl: '', name: { en: 'Leather journal', ar: 'دفتر جلدي' }, desc: { en: '200 pages, dotted grid.', ar: '٢٠٠ صفحة، شبكة منقطة.' } },
 ];
 
 /* ---------------------------------------------------------------------
@@ -53,6 +53,8 @@ const ICON_PATHS = {
   loader: '<path d="M12 2v4M12 18v4m7.07-15.07-2.83 2.83M7.76 16.24l-2.83 2.83M22 12h-4M6 12H2m15.07 7.07-2.83-2.83M7.76 7.76 4.93 4.93"/>',
   locate: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
   package: '<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/>',
+  search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  edit: '<path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>',
 };
 function icon(name, size = 16, extraClass = '') {
   const p = ICON_PATHS[name] || '';
@@ -66,6 +68,9 @@ const STRINGS = {
   en: {
     brand: 'Buy', tagline: 'A stamped ticket for every order — simple and honest.',
     buy: 'Buy', modal_title: 'Fill your ticket',
+    search_ph: 'Search products…', filter_all: 'All Categories',
+    category_label: 'Category', code_label: 'Product Code',
+    edit: 'Edit', save_changes: 'Save changes', edit_product_title: 'Edit Product',
     phone1: 'Phone number', phone2: 'Second phone (optional)',
     location: 'Delivery location', location_ph: 'Neighborhood, street, landmark…',
     use_location: 'Use my current location', locating: 'Locating…',
@@ -108,6 +113,9 @@ const STRINGS = {
   ar: {
     brand: 'اشترِ', tagline: 'تذكرة مختومة لكل طلب — بسيطة وصادقة.',
     buy: 'اشترِ', modal_title: 'املأ تذكرتك',
+    search_ph: 'ابحث عن منتج…', filter_all: 'كل الفئات',
+    category_label: 'الفئة', code_label: 'كود المنتج',
+    edit: 'تعديل', save_changes: 'حفظ التغييرات', edit_product_title: 'تعديل منتج',
     phone1: 'رقم الهاتف', phone2: 'رقم هاتف ثانٍ (اختياري)',
     location: 'موقع التوصيل', location_ph: 'الحي، الشارع، أقرب معلم…',
     use_location: 'استخدم موقعي الحالي', locating: 'جارٍ تحديد الموقع…',
@@ -159,10 +167,6 @@ const DB = {
     try {
       const snap = await getDocs(collection(db, 'products'));
       if (!snap.empty) return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      // Collection is empty — try to seed the starter products. This only
-      // succeeds if the current visitor is an admin (see Firestore rules);
-      // if it fails (e.g. a regular customer got here first), that's fine —
-      // we still show the starter list locally so the shop is never blank.
       try {
         for (const p of DEFAULT_PRODUCTS) {
           const { id, ...data } = p;
@@ -182,22 +186,22 @@ const DB = {
     await setDoc(doc(db, 'products', id), data);
     return product;
   },
+  async updateProduct(id, updates) {
+    await updateDoc(doc(db, 'products', id), updates);
+  },
   async removeProduct(id) {
     await deleteDoc(doc(db, 'products', id));
   },
-async getAllOrders() {
-  const snap = await getDocs(collection(db, 'orders'));
-  return snap.docs
-    .map(d => ({ id: d.id, ...d.data() }))
-    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-},
-async getOrdersByBuyer(email) {
-  const q = query(collection(db, 'orders'), where('buyerEmail', '==', email));
-  const snap = await getDocs(q);
-  return snap.docs
-    .map(d => ({ id: d.id, ...d.data() }))
-    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-},
+  async getAllOrders() {
+    const q = query(collection(db, 'orders'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  },
+  async getOrdersByBuyer(email) {
+    const q = query(collection(db, 'orders'), where('buyerEmail', '==', email));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  },
   async addOrder(order) {
     const { id, ...data } = order;
     await setDoc(doc(db, 'orders', id), data);
@@ -225,6 +229,8 @@ const state = {
   products: [],
   orders: [],
   currentUser: null,
+  searchQuery: '',
+  selectedCategory: 'all'
 };
 
 function t(key) { return STRINGS[state.lang][key]; }
@@ -311,8 +317,16 @@ function googleIconSvg() {
 /* ---------------------------------------------------------------------
    RENDER: SHOP
 --------------------------------------------------------------------- */
-function renderShop() {
-  const cards = state.products.map(p => `
+function renderProductGridOnly() {
+  const q = state.searchQuery.toLowerCase();
+  const filteredProducts = state.products.filter(p => {
+    const matchesSearch = p.name[state.lang].toLowerCase().includes(q) || 
+                          p.desc[state.lang].toLowerCase().includes(q);
+    const matchesCategory = state.selectedCategory === 'all' || p.category === state.selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const cards = filteredProducts.map(p => `
     <div class="ticket-card">
       <div class="ticket-notch start"></div>
       <div class="ticket-notch end"></div>
@@ -330,10 +344,29 @@ function renderShop() {
       </div>
     </div>`).join('');
 
+  return cards.length ? cards : `<div class="empty-body" style="grid-column: 1/-1; text-align:center; padding:40px;">No products found.</div>`;
+}
+
+function renderShop() {
+  const categories = ['all', ...new Set(state.products.map(p => p.category).filter(Boolean))];
+  
+  const filterHtml = `
+    <div class="shop-filters">
+      <div class="input-icon-wrap" style="flex:1;">
+        ${icon('search', 15)}
+        <input type="text" class="input" id="search-input" placeholder="${t('search_ph')}" value="${escapeHtml(state.searchQuery)}">
+      </div>
+      <select class="input" id="category-select" style="max-width:200px;">
+        ${categories.map(c => `<option value="${escapeHtml(c)}" ${state.selectedCategory === c ? 'selected' : ''}>${c === 'all' ? t('filter_all') : escapeHtml(c)}</option>`).join('')}
+      </select>
+    </div>
+  `;
+
   return `
     ${renderHeader()}
     <section class="hero"><h1 class="display">${escapeHtml(t('tagline'))}</h1></section>
-    <section class="product-grid">${cards}</section>`;
+    <section class="filter-section" style="padding: 0 24px 20px;">${filterHtml}</section>
+    <section class="product-grid" id="main-product-grid">${renderProductGridOnly()}</section>`;
 }
 
 /* ---------------------------------------------------------------------
@@ -446,7 +479,7 @@ function renderOrdersTab() {
     return `
     <tr>
       <td class="mono" style="font-weight:500;white-space:nowrap">${o.id}</td>
-      <td>${escapeHtml(o.productName)}<div class="sub-cell mono">${formatPrice(o.price)}</div></td>
+      <td>${escapeHtml(o.productName)}${o.productCode ? `<div class="sub-cell mono">${escapeHtml(o.productCode)}</div>` : ''}<div class="sub-cell mono">${formatPrice(o.price)}</div></td>
       <td style="max-width:160px">${o.buyerName ? `<div>${escapeHtml(o.buyerName)}</div><div class="sub-cell">${escapeHtml(o.buyerEmail)}</div>` : `<span style="color:var(--ink-soft)">${t('guest_label')}</span>`}</td>
       <td style="white-space:nowrap"><div>${escapeHtml(o.phone1)}</div>${o.phone2 ? `<div class="sub-cell">${escapeHtml(o.phone2)}</div>` : ''}</td>
       <td style="max-width:180px">${escapeHtml(o.location)}</td>
@@ -497,18 +530,18 @@ function renderProductsTab() {
     : `<div class="product-manage-grid">${state.products.map(p => `
         <div class="product-manage-card">
           ${p.imageUrl ? `<img class="product-manage-image" src="${escapeHtml(p.imageUrl)}" alt="" onerror="this.style.display='none'"/>` : ''}
-         // Inside renderProductsTab(), update the product manage card layout:
-<div class="product-manage-body">
-  <div class="row between" style="margin-bottom:8px">
-    <div class="row gap-md">
-      ${!p.imageUrl ? `<div class="product-icon" style="width:32px;height:32px;margin:0">${icon('package', 16)}</div>` : ''}
-      <div class="product-name" style="font-size:14px">${escapeHtml(p.name[state.lang])}</div>
-    </div>
-    ${p.code ? `<span class="code-badge mono">${escapeHtml(p.code)}</span>` : ''}
-  </div>
-  <div class="mono" style="font-size:13px;margin-bottom:10px">${formatPrice(p.price)}</div>
-            <div class="remove-zone" data-id="${p.id}">
-              <button class="outline-btn row gap-sm" style="color:var(--rose)" data-action="ask-remove" data-id="${p.id}">${icon('trash', 13)} ${t('remove')}</button>
+          <div class="product-manage-body">
+            <div class="row gap-md" style="margin-bottom:8px">
+              ${!p.imageUrl ? `<div class="product-icon" style="width:32px;height:32px;margin:0">${icon('package', 16)}</div>` : ''}
+              <div>
+                <div class="product-name" style="font-size:14px">${escapeHtml(p.name[state.lang])}</div>
+                ${p.code ? `<div class="sub-cell mono">${escapeHtml(p.code)}</div>` : ''}
+              </div>
+            </div>
+            <div class="mono" style="font-size:13px;margin-bottom:10px">${formatPrice(p.price)}</div>
+            <div class="remove-zone" data-id="${p.id}" style="display:flex;gap:8px;">
+              <button class="outline-btn row gap-sm" style="color:var(--ink);flex:1;" data-action="ask-edit" data-id="${p.id}">${icon('edit', 13)} ${t('edit')}</button>
+              <button class="outline-btn row gap-sm" style="color:var(--rose);flex:1;" data-action="ask-remove" data-id="${p.id}">${icon('trash', 13)} ${t('remove')}</button>
             </div>
           </div>
         </div>`).join('')}</div>`;
@@ -516,17 +549,17 @@ function renderProductsTab() {
   return `
     <div class="form-card">
       <div class="form-title">${t('new_product_title')}</div>
-     // Inside renderProductsTab():
-<div class="form-grid">
-  <div class="field"><label>Product Code (Admin Only)</label><input class="input mono" id="np-code" placeholder="e.g. PRD-101"/></div>
-  <div class="field"><label>${t('product_price')}</label><input class="input" id="np-price" type="number" min="0"/></div>
-  <div class="field"><label>${t('product_name_en')}</label><input class="input" id="np-name-en"/></div>
-  <div class="field"><label>${t('product_name_ar')}</label><input class="input" id="np-name-ar" dir="rtl"/></div>
-  <div class="field"><label>${t('product_desc_en')}</label><input class="input" id="np-desc-en"/></div>
-  <div class="field"><label>${t('product_desc_ar')}</label><input class="input" id="np-desc-ar" dir="rtl"/></div>
-  <div class="field"><label>${t('image_url_label')}</label><input class="input" id="np-image" placeholder="https://…"/></div>
-  <div class="field"><label>${t('video_url_label')}</label><input class="input" id="np-video" placeholder="https://…"/></div>
-</div>
+      <div class="form-grid">
+        <div class="field"><label>${t('product_name_en')}</label><input class="input" id="np-name-en"/></div>
+        <div class="field"><label>${t('product_name_ar')}</label><input class="input" id="np-name-ar" dir="rtl"/></div>
+        <div class="field"><label>${t('product_desc_en')}</label><input class="input" id="np-desc-en"/></div>
+        <div class="field"><label>${t('product_desc_ar')}</label><input class="input" id="np-desc-ar" dir="rtl"/></div>
+        <div class="field"><label>${t('product_price')}</label><input class="input" id="np-price" type="number" min="0"/></div>
+        <div class="field"><label>${t('code_label')}</label><input class="input" id="np-code"/></div>
+        <div class="field"><label>${t('category_label')}</label><input class="input" id="np-category"/></div>
+        <div class="field"><label>${t('image_url_label')}</label><input class="input" id="np-image" placeholder="https://…"/></div>
+        <div class="field" style="grid-column:1/-1"><label>${t('video_url_label')}</label><input class="input" id="np-video" placeholder="https://…"/></div>
+      </div>
       <div id="np-error" class="error-text" hidden></div>
       <button class="brass-btn" data-action="add-product" style="margin-top:6px">${icon('plus', 14)} ${t('add_product')}</button>
     </div>
@@ -546,7 +579,7 @@ function renderApp() {
 }
 
 /* ---------------------------------------------------------------------
-   MODALS: BUY
+   MODALS: BUY & EDIT
 --------------------------------------------------------------------- */
 let noteCount = 0;
 function openBuyModal(productId) {
@@ -646,7 +679,7 @@ async function submitOrder(product) {
   }
 
   const order = {
-    id: makeTicketNo(), productId: product.id, productName: product.name[state.lang], price: product.price,
+    id: makeTicketNo(), productId: product.id, productCode: product.code || '', productName: product.name[state.lang], price: product.price,
     phone1, phone2, location, notes, status: 'pending',
     buyerName: state.currentUser ? state.currentUser.name : '',
     buyerEmail: state.currentUser ? state.currentUser.email : '',
@@ -665,6 +698,74 @@ async function submitOrder(product) {
     errEl.hidden = false;
     submitBtn.disabled = false;
     submitBtn.textContent = t('submit');
+  }
+}
+
+function openEditProductModal(id) {
+  const p = state.products.find(x => x.id === id);
+  if (!p) return;
+  const root = document.getElementById('modal-root');
+  root.innerHTML = `
+    <div class="overlay" id="edit-overlay">
+      <div class="modal wide" onclick="event.stopPropagation()">
+        <div class="modal-head">
+          <div class="modal-title display">${t('edit_product_title')}</div>
+          <button class="close-btn" data-action="close-edit">${icon('x', 20)}</button>
+        </div>
+        <div class="modal-body form-grid">
+          <div class="field"><label>${t('product_name_en')}</label><input class="input" id="ep-name-en" value="${escapeHtml(p.name.en)}"/></div>
+          <div class="field"><label>${t('product_name_ar')}</label><input class="input" id="ep-name-ar" dir="rtl" value="${escapeHtml(p.name.ar)}"/></div>
+          <div class="field"><label>${t('product_desc_en')}</label><input class="input" id="ep-desc-en" value="${escapeHtml(p.desc.en)}"/></div>
+          <div class="field"><label>${t('product_desc_ar')}</label><input class="input" id="ep-desc-ar" dir="rtl" value="${escapeHtml(p.desc.ar)}"/></div>
+          <div class="field"><label>${t('product_price')}</label><input class="input" id="ep-price" type="number" min="0" value="${p.price}"/></div>
+          <div class="field"><label>${t('code_label')}</label><input class="input" id="ep-code" value="${escapeHtml(p.code || '')}"/></div>
+          <div class="field"><label>${t('category_label')}</label><input class="input" id="ep-category" value="${escapeHtml(p.category || '')}"/></div>
+          <div class="field"><label>${t('image_url_label')}</label><input class="input" id="ep-image" value="${escapeHtml(p.imageUrl || '')}"/></div>
+          <div class="field" style="grid-column:1/-1"><label>${t('video_url_label')}</label><input class="input" id="ep-video" value="${escapeHtml(p.videoUrl || '')}"/></div>
+          <div id="ep-error" class="error-text" style="grid-column:1/-1" hidden></div>
+          <button class="brass-btn" id="ep-submit" style="grid-column:1/-1;margin-top:6px">${t('save_changes')}</button>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('edit-overlay').addEventListener('click', closeEditModal);
+  document.querySelector('[data-action="close-edit"]').addEventListener('click', closeEditModal);
+  document.getElementById('ep-submit').addEventListener('click', () => submitEditProduct(id));
+}
+function closeEditModal() { document.getElementById('modal-root').innerHTML = ''; }
+
+async function submitEditProduct(id) {
+  const nameEn = document.getElementById('ep-name-en').value.trim();
+  const nameAr = document.getElementById('ep-name-ar').value.trim();
+  const descEn = document.getElementById('ep-desc-en').value.trim();
+  const descAr = document.getElementById('ep-desc-ar').value.trim();
+  const price = Number(document.getElementById('ep-price').value);
+  const code = document.getElementById('ep-code').value.trim();
+  const category = document.getElementById('ep-category').value.trim();
+  const imageUrl = document.getElementById('ep-image').value.trim();
+  const videoUrl = document.getElementById('ep-video').value.trim();
+  const errEl = document.getElementById('ep-error');
+  const btn = document.getElementById('ep-submit');
+
+  if (!nameEn || !nameAr || !price || price <= 0) {
+    errEl.textContent = t('product_fields_required');
+    errEl.hidden = false;
+    return;
+  }
+  const updates = { code, category, price, imageUrl, videoUrl, name: { en: nameEn, ar: nameAr }, desc: { en: descEn, ar: descAr } };
+
+  btn.disabled = true;
+  try {
+    await DB.updateProduct(id, updates);
+    const idx = state.products.findIndex(x => x.id === id);
+    if (idx !== -1) state.products[idx] = { ...state.products[idx], ...updates };
+    closeEditModal();
+    document.getElementById('admin-tab-content').innerHTML = renderProductsTab();
+    wireProductsTabEvents();
+  } catch (e) {
+    errEl.textContent = t('product_fields_required');
+    errEl.hidden = false;
+    btn.disabled = false;
   }
 }
 
@@ -866,12 +967,13 @@ onAuthStateChanged(auth, async (fbUser) => {
    ADMIN ACTIONS
 --------------------------------------------------------------------- */
 async function addProductFromForm() {
-  const code = document.getElementById('np-code').value.trim().toUpperCase(); // Stores whatever you typed
   const nameEn = document.getElementById('np-name-en').value.trim();
   const nameAr = document.getElementById('np-name-ar').value.trim();
   const descEn = document.getElementById('np-desc-en').value.trim();
   const descAr = document.getElementById('np-desc-ar').value.trim();
   const price = Number(document.getElementById('np-price').value);
+  const code = document.getElementById('np-code').value.trim();
+  const category = document.getElementById('np-category').value.trim();
   const imageUrl = document.getElementById('np-image').value.trim();
   const videoUrl = document.getElementById('np-video').value.trim();
   const errEl = document.getElementById('np-error');
@@ -882,16 +984,7 @@ async function addProductFromForm() {
     errEl.hidden = false;
     return;
   }
-
-  const product = { 
-    id: makeId('p'), 
-    code: code || '', // Keeps your typed code (or blank if you didn't enter one)
-    price, 
-    imageUrl, 
-    videoUrl, 
-    name: { en: nameEn, ar: nameAr }, 
-    desc: { en: descEn, ar: descAr } 
-  };
+  const product = { id: makeId('p'), code, category, price, imageUrl, videoUrl, name: { en: nameEn, ar: nameAr }, desc: { en: descEn, ar: descAr } };
 
   if (addBtn) addBtn.disabled = true;
   try {
@@ -910,7 +1003,7 @@ function askRemoveProduct(id) {
   const zone = document.querySelector(`.remove-zone[data-id="${id}"]`);
   if (!zone) return;
   zone.innerHTML = `
-    <div class="confirm-row">
+    <div class="confirm-row" style="width:100%">
       <button class="danger-btn" data-action="confirm-remove" data-id="${id}">${t('yes_remove')}</button>
       <button class="outline-btn" data-action="cancel-remove" data-id="${id}">${t('keep')}</button>
     </div>`;
@@ -934,11 +1027,30 @@ function wireProductsTabEvents() {
   document.querySelectorAll('[data-action="ask-remove"]').forEach(btn => {
     btn.addEventListener('click', () => askRemoveProduct(btn.dataset.id));
   });
+  document.querySelectorAll('[data-action="ask-edit"]').forEach(btn => {
+    btn.addEventListener('click', () => openEditProductModal(btn.dataset.id));
+  });
 }
 
 /* ---------------------------------------------------------------------
-   GLOBAL EVENT DELEGATION (for the main #app view)
+   GLOBAL EVENT DELEGATION
 --------------------------------------------------------------------- */
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'search-input') {
+    state.searchQuery = e.target.value;
+    const grid = document.getElementById('main-product-grid');
+    if (grid) grid.innerHTML = renderProductGridOnly();
+  }
+});
+
+document.addEventListener('change', (e) => {
+  if (e.target.id === 'category-select') {
+    state.selectedCategory = e.target.value;
+    const grid = document.getElementById('main-product-grid');
+    if (grid) grid.innerHTML = renderProductGridOnly();
+  }
+});
+
 document.addEventListener('click', async (e) => {
   const el = e.target.closest('[data-action]');
   if (!el) {

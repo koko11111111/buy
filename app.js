@@ -512,15 +512,17 @@ function renderProductsTab() {
   return `
     <div class="form-card">
       <div class="form-title">${t('new_product_title')}</div>
-      <div class="form-grid">
-        <div class="field"><label>${t('product_name_en')}</label><input class="input" id="np-name-en"/></div>
-        <div class="field"><label>${t('product_name_ar')}</label><input class="input" id="np-name-ar" dir="rtl"/></div>
-        <div class="field"><label>${t('product_desc_en')}</label><input class="input" id="np-desc-en"/></div>
-        <div class="field"><label>${t('product_desc_ar')}</label><input class="input" id="np-desc-ar" dir="rtl"/></div>
-        <div class="field"><label>${t('product_price')}</label><input class="input" id="np-price" type="number" min="0"/></div>
-        <div class="field"><label>${t('image_url_label')}</label><input class="input" id="np-image" placeholder="https://…"/></div>
-        <div class="field" style="grid-column:1/-1"><label>${t('video_url_label')}</label><input class="input" id="np-video" placeholder="https://…"/></div>
-      </div>
+     // Inside renderProductsTab():
+<div class="form-grid">
+  <div class="field"><label>Product Code (Admin Only)</label><input class="input mono" id="np-code" placeholder="e.g. PRD-101"/></div>
+  <div class="field"><label>${t('product_price')}</label><input class="input" id="np-price" type="number" min="0"/></div>
+  <div class="field"><label>${t('product_name_en')}</label><input class="input" id="np-name-en"/></div>
+  <div class="field"><label>${t('product_name_ar')}</label><input class="input" id="np-name-ar" dir="rtl"/></div>
+  <div class="field"><label>${t('product_desc_en')}</label><input class="input" id="np-desc-en"/></div>
+  <div class="field"><label>${t('product_desc_ar')}</label><input class="input" id="np-desc-ar" dir="rtl"/></div>
+  <div class="field"><label>${t('image_url_label')}</label><input class="input" id="np-image" placeholder="https://…"/></div>
+  <div class="field"><label>${t('video_url_label')}</label><input class="input" id="np-video" placeholder="https://…"/></div>
+</div>
       <div id="np-error" class="error-text" hidden></div>
       <button class="brass-btn" data-action="add-product" style="margin-top:6px">${icon('plus', 14)} ${t('add_product')}</button>
     </div>

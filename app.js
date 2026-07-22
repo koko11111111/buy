@@ -20,9 +20,66 @@ import {
 /* ---------------------------------------------------------------------
    CONFIG — edit these two things for your real store.
 --------------------------------------------------------------------- */
-const ADMIN_EMAILS = ['kokomina946@gmail.com', 'patrick.kimo2010@gmail.com', 'yassaking687@gmail.com'];
+const ADMIN_EMAILS = ['kokomina946@gmail.com', 'felooisthebest1@gmail.com'];
 const SUPPORT_PHONE = '01226754491';
 const PHONE_PATTERN = /^01[0125]\d{8}$/; // Egyptian mobile: 01 + network digit + 8 digits, 11 total
+
+/* ---------------------------------------------------------------------
+   EMAILJS — free order-confirmation emails, no backend needed.
+   Fill these in after setting up a free account at emailjs.com
+   (see README.md for the exact steps). Leaving them blank just means
+   confirmation emails silently don't send — nothing else breaks.
+--------------------------------------------------------------------- */
+const EMAILJS_SERVICE_ID = 'service_jxgo1ff';
+const EMAILJS_TEMPLATE_ID = 'template_i3gycwl';
+const EMAILJS_WELCOME_TEMPLATE_ID = 'template_sy1skmi';
+const EMAILJS_PUBLIC_KEY = 'ap6g28IA9votr2zYS';
+
+let emailjs = null;
+let emailjsReady = false;
+(async () => {
+  try {
+    if (EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') return; // not configured yet
+    const mod = await import('https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/+esm');
+    emailjs = mod.default;
+    emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+    emailjsReady = true;
+  } catch (e) {
+    console.warn('EmailJS failed to load — order confirmation emails are disabled, everything else still works:', e);
+  }
+})();
+
+async function sendConfirmationEmail(order, email) {
+  if (!emailjsReady || !email) return;
+  try {
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email: email,
+      to_name: order.buyerName || email,
+      ticket_id: order.id,
+      product_name: order.productName,
+      price: formatPrice(order.price),
+      phone1: order.phone1,
+      location: order.location,
+      notes: order.notes && order.notes.length ? order.notes.join(', ') : '—',
+      support_phone: SUPPORT_PHONE,
+    });
+  } catch (e) {
+    console.warn('Could not send confirmation email (order was still placed fine):', e);
+  }
+}
+
+async function sendWelcomeEmail(name, email) {
+  if (!emailjsReady || !email) return;
+  try {
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_WELCOME_TEMPLATE_ID, {
+      email: email,
+      name: name || email,
+      support_phone: SUPPORT_PHONE,
+    });
+  } catch (e) {
+    console.warn('Could not send welcome email (account was still created fine):', e);
+  }
+}
 
 const DEFAULT_PRODUCTS = [
   { id: 'p1', code: 'LMP-01', category: 'Home', price: 1450, imageUrl: '', videoUrl: '', name: { en: 'Cedar desk lamp', ar: 'مصباح مكتب خشب الأرز' }, desc: { en: 'Warm brass fitting, adjustable arm.', ar: 'تركيب نحاسي دافئ، ذراع قابل للتعديل.' } },
@@ -72,6 +129,7 @@ const STRINGS = {
     category_label: 'Category', code_label: 'Product Code',
     edit: 'Edit', save_changes: 'Save changes', edit_product_title: 'Edit Product',
     phone1: 'Phone number', phone2: 'Second phone (optional)',
+    email_confirm_label: 'Email (for order confirmation, optional)',
     location: 'Delivery location', location_ph: 'Neighborhood, street, landmark…',
     use_location: 'Use my current location', locating: 'Locating…',
     location_denied: "Couldn't get your location. Type it in instead.",
@@ -80,6 +138,7 @@ const STRINGS = {
     submit: 'Stamp my order', submitting: 'Stamping…', cancel: 'Cancel',
     required: 'Phone number and location are required.',
     phone_invalid: 'Enter an 11-digit number like 01226754491.',
+    email_invalid: 'That email doesn\'t look right — fix it or leave it blank.',
     success_title: 'Order stamped', success_body: 'Ticket number',
     success_sub: "We'll reach out on the number you gave us.", back_to_shop: 'Back to shop',
     admin_title: 'Ledger', admin_tab_orders: 'Orders', admin_tab_products: 'Products',
@@ -117,6 +176,7 @@ const STRINGS = {
     category_label: 'الفئة', code_label: 'كود المنتج',
     edit: 'تعديل', save_changes: 'حفظ التغييرات', edit_product_title: 'تعديل منتج',
     phone1: 'رقم الهاتف', phone2: 'رقم هاتف ثانٍ (اختياري)',
+    email_confirm_label: 'البريد الإلكتروني (لتأكيد الطلب، اختياري)',
     location: 'موقع التوصيل', location_ph: 'الحي، الشارع، أقرب معلم…',
     use_location: 'استخدم موقعي الحالي', locating: 'جاري تحديد الموقع…',
     location_denied: 'تعذّر تحديد موقعك. اكتبه يدويًا.',
@@ -125,6 +185,7 @@ const STRINGS = {
     submit: 'اختم طلبي', submitting: 'جاري الختم…', cancel: 'إلغاء',
     required: 'رقم الهاتف والموقع مطلوبان.',
     phone_invalid: 'أدخل رقمًا مكونًا من ١١ رقمًا مثل 01226754491.',
+    email_invalid: 'هذا البريد الإلكتروني غير صحيح — صححه أو اتركه فارغًا.',
     success_title: 'تم ختم الطلب', success_body: 'رقم التذكرة',
     success_sub: 'سنتواصل معك على الرقم الذي أدخلته.', back_to_shop: 'العودة للمتجر',
     admin_title: 'السجل', admin_tab_orders: 'الطلبات', admin_tab_products: 'المنتجات',
@@ -605,6 +666,10 @@ function openBuyModal(productId) {
             <div class="input-icon-wrap">${icon('phone', 15)}<input class="input" id="buy-phone2" type="tel" inputmode="numeric" maxlength="11" placeholder="01226754491"/></div>
           </div>
           <div class="field">
+            <label>${t('email_confirm_label')}</label>
+            <input class="input" id="buy-email" type="email" placeholder="name@email.com" value="${escapeHtml(state.currentUser ? state.currentUser.email : '')}"/>
+          </div>
+          <div class="field">
             <label>${t('location')} <span class="req">*</span></label>
             <div class="input-icon-wrap">${icon('pin', 15)}<input class="input" id="buy-location" placeholder="${t('location_ph')}"/></div>
             <button class="text-btn" id="buy-geolocate" style="margin-top:6px">${icon('locate', 13)}<span id="geolocate-label">${t('use_location')}</span></button>
@@ -662,6 +727,7 @@ function handleGeolocate() {
 async function submitOrder(product) {
   const phone1 = document.getElementById('buy-phone1').value.trim();
   const phone2 = document.getElementById('buy-phone2').value.trim();
+  const email = document.getElementById('buy-email').value.trim();
   const location = document.getElementById('buy-location').value.trim();
   const notes = Array.from(document.querySelectorAll('#buy-notes-list input')).map(i => i.value.trim()).filter(Boolean);
   const errEl = document.getElementById('buy-error');
@@ -674,6 +740,11 @@ async function submitOrder(product) {
   }
   if (!PHONE_PATTERN.test(phone1) || (phone2 && !PHONE_PATTERN.test(phone2))) {
     errEl.textContent = t('phone_invalid');
+    errEl.hidden = false;
+    return;
+  }
+  if (email && !isValidEmail(email)) {
+    errEl.textContent = t('email_invalid');
     errEl.hidden = false;
     return;
   }
@@ -693,6 +764,7 @@ async function submitOrder(product) {
     state.orders = [order, ...state.orders];
     closeBuyModal();
     openSuccessModal(order);
+    sendConfirmationEmail(order, email); // fire-and-forget; doesn't block the success screen
   } catch (e) {
     errEl.textContent = t('required');
     errEl.hidden = false;
@@ -903,6 +975,7 @@ async function signup({ name, email, password, phone }) {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(cred.user, { displayName: name });
     await DB.setUserProfile(cred.user.uid, { name, email, phone: phone || '', createdAt: new Date().toISOString() });
+    sendWelcomeEmail(name, email); // fire-and-forget, doesn't block account creation
     return { ok: true };
   } catch (e) {
     return { ok: false, error: authErrorMessage(e) };
@@ -930,6 +1003,7 @@ async function loginWithGoogle() {
         phone: '',
         createdAt: new Date().toISOString(),
       });
+      sendWelcomeEmail(cred.user.displayName || cred.user.email, cred.user.email); // fire-and-forget, first-time users only
     }
     return { ok: true };
   } catch (e) {

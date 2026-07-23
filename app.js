@@ -147,6 +147,7 @@ const STRINGS = {
     status_pending: 'Pending', status_done: 'Done', status_cancelled: 'Cancelled',
     mark_done: 'Mark as done', mark_pending: 'Mark as pending',
     undo_ticket: 'Cancel this order', undo_ask: 'Cancel this order?', undo_yes: 'Yes, cancel it', undo_keep: 'Never mind',
+    delete_ticket: 'Delete', delete_ask: "Delete this order? This can't be undone.", delete_yes: 'Yes, delete it',
     support_label: 'Need help with this order?', call_support: 'Call support',
     guest_label: 'Guest', loading: 'Loading…',
     product_name_en: 'Name (English)', product_name_ar: 'Name (Arabic)',
@@ -194,6 +195,7 @@ const STRINGS = {
     status_pending: 'قيد الانتظار', status_done: 'تم التنفيذ', status_cancelled: 'ملغي',
     mark_done: 'تحديد كمكتمل', mark_pending: 'إعادة إلى الانتظار',
     undo_ticket: 'إلغاء الطلب', undo_ask: 'هل تريد إلغاء هذا الطلب؟', undo_yes: 'نعم، ألغِ الطلب', undo_keep: 'تراجع',
+    delete_ticket: 'حذف', delete_ask: 'هل تريد حذف هذا الطلب؟ لا يمكن التراجع عن هذا.', delete_yes: 'نعم، احذفه',
     support_label: 'تحتاج مساعدة بخصوص هذا الطلب؟', call_support: 'اتصل بالدعم',
     guest_label: 'زائر', loading: 'جاري التحميل…',
     product_name_en: 'الاسم (إنجليزي)', product_name_ar: 'الاسم (عربي)',
@@ -270,6 +272,9 @@ const DB = {
   },
   async updateOrderStatus(id, status) {
     await updateDoc(doc(db, 'orders', id), { status });
+  },
+  async deleteOrder(id) {
+    await deleteDoc(doc(db, 'orders', id));
   },
   async getUserProfile(uid) {
     const snap = await getDoc(doc(db, 'users', uid));
@@ -462,6 +467,9 @@ function renderMyOrders() {
               <a href="tel:${SUPPORT_PHONE}">${icon('phone', 12)} ${t('call_support')}: ${SUPPORT_PHONE}</a>
             </div>` : ''}
           </div>
+          <div style="padding:0 18px 16px" data-order-delete-zone="${o.id}">
+            <button class="text-btn" style="color:var(--rose)" data-action="ask-delete-order-user" data-id="${o.id}">${icon('trash', 13)} ${t('delete_ticket')}</button>
+          </div>
         </div>`;
       }).join('')}</div>`;
 
@@ -507,9 +515,39 @@ async function confirmUndoOrder(id) {
   }
 }
 
+function askDeleteOrderUser(id) {
+  const zone = document.querySelector(`[data-order-delete-zone="${id}"]`);
+  if (!zone) return;
+  zone.innerHTML = `
+    <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:6px">${t('delete_ask')}</div>
+    <div class="confirm-row">
+      <button class="danger-btn" data-action="confirm-delete-order-user" data-id="${id}">${t('delete_yes')}</button>
+      <button class="outline-btn" data-action="cancel-delete-order-user" data-id="${id}">${t('undo_keep')}</button>
+    </div>`;
+  zone.querySelector('[data-action="confirm-delete-order-user"]').addEventListener('click', () => confirmDeleteOrderUser(id));
+  zone.querySelector('[data-action="cancel-delete-order-user"]').addEventListener('click', () => {
+    renderApp();
+    wireMyOrdersEvents();
+  });
+}
+
+async function confirmDeleteOrderUser(id) {
+  try {
+    await DB.deleteOrder(id);
+    state.orders = state.orders.filter(o => o.id !== id);
+    renderApp();
+    wireMyOrdersEvents();
+  } catch (e) {
+    console.error('Could not delete order:', e);
+  }
+}
+
 function wireMyOrdersEvents() {
   document.querySelectorAll('[data-action="ask-undo"]').forEach(btn => {
     btn.addEventListener('click', () => askUndoOrder(btn.dataset.id));
+  });
+  document.querySelectorAll('[data-action="ask-delete-order-user"]').forEach(btn => {
+    btn.addEventListener('click', () => askDeleteOrderUser(btn.dataset.id));
   });
 }
 
@@ -554,6 +592,9 @@ function renderOrdersTab() {
           </button>
         </div>` : ''}
       </td>
+      <td style="white-space:nowrap" data-order-delete-zone="${o.id}">
+        <button class="outline-btn" style="color:var(--rose)" data-action="ask-delete-order-admin" data-id="${o.id}">${icon('trash', 13)} ${t('delete_ticket')}</button>
+      </td>
     </tr>`;
   }).join('');
 
@@ -561,10 +602,37 @@ function renderOrdersTab() {
     <div class="table-wrap"><div class="table-scroll"><table>
       <thead><tr>
         <th>${t('col_ticket')}</th><th>${t('col_product')}</th><th>${t('col_buyer')}</th>
-        <th>${t('col_phones')}</th><th>${t('col_location')}</th><th>${t('col_notes')}</th><th>${t('col_time')}</th><th>${t('col_status')}</th>
+        <th>${t('col_phones')}</th><th>${t('col_location')}</th><th>${t('col_notes')}</th><th>${t('col_time')}</th><th>${t('col_status')}</th><th></th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table></div></div>`;
+}
+
+function askDeleteOrderAdmin(id) {
+  const zone = document.querySelector(`[data-order-delete-zone="${id}"]`);
+  if (!zone) return;
+  zone.innerHTML = `
+    <div style="font-size:12px;color:var(--ink-soft);margin-bottom:6px;max-width:140px">${t('delete_ask')}</div>
+    <div class="confirm-row">
+      <button class="danger-btn" data-action="confirm-delete-order-admin" data-id="${id}">${t('delete_yes')}</button>
+      <button class="outline-btn" data-action="cancel-delete-order-admin" data-id="${id}">${t('keep')}</button>
+    </div>`;
+  zone.querySelector('[data-action="confirm-delete-order-admin"]').addEventListener('click', () => confirmDeleteOrderAdmin(id));
+  zone.querySelector('[data-action="cancel-delete-order-admin"]').addEventListener('click', () => {
+    document.getElementById('admin-tab-content').innerHTML = renderOrdersTab();
+    wireOrdersTabEvents();
+  });
+}
+
+async function confirmDeleteOrderAdmin(id) {
+  try {
+    await DB.deleteOrder(id);
+    state.orders = state.orders.filter(o => o.id !== id);
+    document.getElementById('admin-tab-content').innerHTML = renderOrdersTab();
+    wireOrdersTabEvents();
+  } catch (e) {
+    console.error('Could not delete order:', e);
+  }
 }
 
 async function toggleOrderStatus(id, nextStatus) {
@@ -582,6 +650,9 @@ async function toggleOrderStatus(id, nextStatus) {
 function wireOrdersTabEvents() {
   document.querySelectorAll('[data-action="toggle-status"]').forEach(btn => {
     btn.addEventListener('click', () => toggleOrderStatus(btn.dataset.id, btn.dataset.next));
+  });
+  document.querySelectorAll('[data-action="ask-delete-order-admin"]').forEach(btn => {
+    btn.addEventListener('click', () => askDeleteOrderAdmin(btn.dataset.id));
   });
 }
 

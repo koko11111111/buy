@@ -222,6 +222,13 @@ a { color: inherit; }
 .ticket-divider { border-top: 2px dashed var(--line); margin: 0 16px; }
 
 .product-image { width: 100%; height: 140px; object-fit: cover; display: block; background: var(--paper); }
+.product-image-wrap { position: relative; cursor: pointer; }
+.photo-count-badge {
+  position: absolute; bottom: 8px; inset-inline-end: 8px;
+  background: rgba(30,42,50,0.72); color: #fff; border-radius: 999px;
+  padding: 3px 9px; font-size: 11px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 4px;
+}
 .product-body { padding: 22px 18px 16px; text-align: start; }
 .product-icon {
   width: 42px; height: 42px; border-radius: 50%;

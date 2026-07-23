@@ -82,12 +82,12 @@ async function sendWelcomeEmail(name, email) {
 }
 
 const DEFAULT_PRODUCTS = [
-  { id: 'p1', code: 'LMP-01', category: 'Home', price: 1450, imageUrl: '', videoUrl: '', name: { en: 'Cedar desk lamp', ar: 'مصباح مكتب خشب الأرز' }, desc: { en: 'Warm brass fitting, adjustable arm.', ar: 'تركيب نحاسي دافئ، ذراع قابل للتعديل.' } },
-  { id: 'p2', code: 'CFF-01', category: 'Kitchen', price: 620, imageUrl: '', videoUrl: '', name: { en: 'Pour-over coffee set', ar: 'طقم قهوة مقطرة يدويًا' }, desc: { en: 'Ceramic dripper, glass carafe.', ar: 'مصفاة سيراميك، إبريق زجاجي.' } },
-  { id: 'p3', code: 'WTC-01', category: 'Accessories', price: 2300, imageUrl: '', videoUrl: '', name: { en: 'Field watch', ar: 'ساعة ميدانية' }, desc: { en: 'Stainless case, canvas strap.', ar: 'هيكل ستانلس، سوار قماشي.' } },
-  { id: 'p4', code: 'BAG-01', category: 'Accessories', price: 980, imageUrl: '', videoUrl: '', name: { en: 'Canvas day pack', ar: 'حقيبة ظهر قماشية' }, desc: { en: 'Water-resistant, leather trims.', ar: 'مقاومة للماء، حواف جلدية.' } },
-  { id: 'p5', code: 'AUD-01', category: 'Electronics', price: 1750, imageUrl: '', videoUrl: '', name: { en: 'Studio headphones', ar: 'سماعات استوديو' }, desc: { en: 'Over-ear, foldable frame.', ar: 'محيطة بالأذن، هيكل قابل للطي.' } },
-  { id: 'p6', code: 'BOK-01', category: 'Stationery', price: 340, imageUrl: '', videoUrl: '', name: { en: 'Leather journal', ar: 'دفتر جلدي' }, desc: { en: '200 pages, dotted grid.', ar: '٢٠٠ صفحة، شبكة منقطة.' } },
+  { id: 'p1', code: 'LMP-01', category: 'Home', price: 1450, imageUrls: [], videoUrl: '', name: { en: 'Cedar desk lamp', ar: 'مصباح مكتب خشب الأرز' }, desc: { en: 'Warm brass fitting, adjustable arm.', ar: 'تركيب نحاسي دافئ، ذراع قابل للتعديل.' } },
+  { id: 'p2', code: 'CFF-01', category: 'Kitchen', price: 620, imageUrls: [], videoUrl: '', name: { en: 'Pour-over coffee set', ar: 'طقم قهوة مقطرة يدويًا' }, desc: { en: 'Ceramic dripper, glass carafe.', ar: 'مصفاة سيراميك، إبريق زجاجي.' } },
+  { id: 'p3', code: 'WTC-01', category: 'Accessories', price: 2300, imageUrls: [], videoUrl: '', name: { en: 'Field watch', ar: 'ساعة ميدانية' }, desc: { en: 'Stainless case, canvas strap.', ar: 'هيكل ستانلس، سوار قماشي.' } },
+  { id: 'p4', code: 'BAG-01', category: 'Accessories', price: 980, imageUrls: [], videoUrl: '', name: { en: 'Canvas day pack', ar: 'حقيبة ظهر قماشية' }, desc: { en: 'Water-resistant, leather trims.', ar: 'مقاومة للماء، حواف جلدية.' } },
+  { id: 'p5', code: 'AUD-01', category: 'Electronics', price: 1750, imageUrls: [], videoUrl: '', name: { en: 'Studio headphones', ar: 'سماعات استوديو' }, desc: { en: 'Over-ear, foldable frame.', ar: 'محيطة بالأذن، هيكل قابل للطي.' } },
+  { id: 'p6', code: 'BOK-01', category: 'Stationery', price: 340, imageUrls: [], videoUrl: '', name: { en: 'Leather journal', ar: 'دفتر جلدي' }, desc: { en: '200 pages, dotted grid.', ar: '٢٠٠ صفحة، شبكة منقطة.' } },
 ];
 
 /* ---------------------------------------------------------------------
@@ -112,6 +112,9 @@ const ICON_PATHS = {
   package: '<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/>',
   search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
   edit: '<path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>',
+  image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
+  chevronLeft: '<path d="m15 18-6-6 6-6"/>',
+  chevronRight: '<path d="m9 18 6-6-6-6"/>',
 };
 function icon(name, size = 16, extraClass = '') {
   const p = ICON_PATHS[name] || '';
@@ -152,7 +155,8 @@ const STRINGS = {
     guest_label: 'Guest', loading: 'Loading…',
     product_name_en: 'Name (English)', product_name_ar: 'Name (Arabic)',
     product_desc_en: 'Description (English)', product_desc_ar: 'Description (Arabic)',
-    product_price: 'Price (EGP)', image_url_label: 'Image URL', video_url_label: 'Video URL (optional)',
+    product_price: 'Price (EGP)', image_url_label: 'Photos (image URLs)', video_url_label: 'Video URL (optional)',
+    add_image: 'Add another photo',
     watch_video: 'Watch video',
     add_product: 'Add product', product_fields_required: 'Fill in both names and a price before adding.',
     no_products: 'No products yet. Add your first one below.',
@@ -200,7 +204,8 @@ const STRINGS = {
     guest_label: 'زائر', loading: 'جاري التحميل…',
     product_name_en: 'الاسم (إنجليزي)', product_name_ar: 'الاسم (عربي)',
     product_desc_en: 'الوصف (إنجليزي)', product_desc_ar: 'الوصف (عربي)',
-    product_price: 'السعر (جنيه)', image_url_label: 'رابط الصورة', video_url_label: 'رابط الفيديو (اختياري)',
+    product_price: 'السعر (جنيه)', image_url_label: 'الصور (روابط)', video_url_label: 'رابط الفيديو (اختياري)',
+    add_image: 'إضافة صورة أخرى',
     watch_video: 'مشاهدة الفيديو',
     add_product: 'إضافة منتج', product_fields_required: 'أدخل الاسميين والسعر قبل الإضافة.',
     no_products: 'لا توجد منتجات بعد. أضف أول منتج بالأسفل.',
@@ -307,6 +312,12 @@ function isAdmin(user) {
 /* ---------------------------------------------------------------------
    UTILITIES
 --------------------------------------------------------------------- */
+function getProductImages(p) {
+  if (Array.isArray(p.imageUrls) && p.imageUrls.length) return p.imageUrls.filter(Boolean);
+  if (p.imageUrl) return [p.imageUrl]; // legacy single-image products already saved
+  return [];
+}
+
 function formatPrice(n) {
   try {
     return new Intl.NumberFormat(state.lang === 'ar' ? 'ar-EG' : 'en-EG', {
@@ -392,13 +403,19 @@ function renderProductGridOnly() {
     return matchesSearch && matchesCategory;
   });
 
-  const cards = filteredProducts.map(p => `
+  const cards = filteredProducts.map(p => {
+    const images = getProductImages(p);
+    return `
     <div class="ticket-card">
       <div class="ticket-notch start"></div>
       <div class="ticket-notch end"></div>
-      ${p.imageUrl ? `<img class="product-image" src="${escapeHtml(p.imageUrl)}" alt="${escapeHtml(p.name[state.lang])}" onerror="this.style.display='none'"/>` : ''}
+      ${images.length ? `
+        <div class="product-image-wrap" data-action="view-gallery" data-id="${p.id}">
+          <img class="product-image" src="${escapeHtml(images[0])}" alt="${escapeHtml(p.name[state.lang])}" onerror="this.style.display='none'"/>
+          ${images.length > 1 ? `<span class="photo-count-badge">${icon('image', 12)} ${images.length}</span>` : ''}
+        </div>` : ''}
       <div class="product-body">
-        ${!p.imageUrl ? `<div class="product-icon">${icon('package', 20)}</div>` : ''}
+        ${!images.length ? `<div class="product-icon">${icon('package', 20)}</div>` : ''}
         <div class="product-name">${escapeHtml(p.name[state.lang])}</div>
         <div class="product-desc">${escapeHtml(p.desc[state.lang])}</div>
         ${p.videoUrl ? `<a class="video-link" href="${escapeHtml(p.videoUrl)}" target="_blank" rel="noopener noreferrer">${icon('play', 14)} ${t('watch_video')}</a>` : ''}
@@ -408,7 +425,8 @@ function renderProductGridOnly() {
         <span class="mono price-tag">${formatPrice(p.price)}</span>
         <button class="brass-btn" data-action="select-product" data-id="${p.id}">${t('buy')}</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   return cards.length ? cards : `<div class="empty-body" style="grid-column: 1/-1; text-align:center; padding:40px;">No products found.</div>`;
 }
@@ -659,12 +677,14 @@ function wireOrdersTabEvents() {
 function renderProductsTab() {
   const list = state.products.length === 0
     ? `<div style="font-size:13px;color:var(--ink-soft)">${t('no_products')}</div>`
-    : `<div class="product-manage-grid">${state.products.map(p => `
+    : `<div class="product-manage-grid">${state.products.map(p => {
+        const images = getProductImages(p);
+        return `
         <div class="product-manage-card">
-          ${p.imageUrl ? `<img class="product-manage-image" src="${escapeHtml(p.imageUrl)}" alt="" onerror="this.style.display='none'"/>` : ''}
+          ${images.length ? `<div class="product-image-wrap"><img class="product-manage-image" src="${escapeHtml(images[0])}" alt="" onerror="this.style.display='none'"/>${images.length > 1 ? `<span class="photo-count-badge">${icon('image', 12)} ${images.length}</span>` : ''}</div>` : ''}
           <div class="product-manage-body">
             <div class="row gap-md" style="margin-bottom:8px">
-              ${!p.imageUrl ? `<div class="product-icon" style="width:32px;height:32px;margin:0">${icon('package', 16)}</div>` : ''}
+              ${!images.length ? `<div class="product-icon" style="width:32px;height:32px;margin:0">${icon('package', 16)}</div>` : ''}
               <div>
                 <div class="product-name" style="font-size:14px">${escapeHtml(p.name[state.lang])}</div>
                 ${p.code ? `<div class="sub-cell mono">${escapeHtml(p.code)}</div>` : ''}
@@ -676,7 +696,8 @@ function renderProductsTab() {
               <button class="outline-btn row gap-sm" style="color:var(--rose);flex:1;" data-action="ask-remove" data-id="${p.id}">${icon('trash', 13)} ${t('remove')}</button>
             </div>
           </div>
-        </div>`).join('')}</div>`;
+        </div>`;
+      }).join('')}</div>`;
 
   return `
     <div class="form-card">
@@ -689,7 +710,13 @@ function renderProductsTab() {
         <div class="field"><label>${t('product_price')}</label><input class="input" id="np-price" type="number" min="0"/></div>
         <div class="field"><label>${t('code_label')}</label><input class="input" id="np-code"/></div>
         <div class="field"><label>${t('category_label')}</label><input class="input" id="np-category"/></div>
-        <div class="field"><label>${t('image_url_label')}</label><input class="input" id="np-image" placeholder="https://…"/></div>
+        <div class="field" style="grid-column:1/-1">
+          <label>${t('image_url_label')}</label>
+          <div class="notes-list" id="np-images-list">
+            <div class="note-row" data-image-row="0"><input class="input" placeholder="https://…"/></div>
+          </div>
+          <button type="button" class="add-note-btn" id="np-add-image" style="margin-top:8px">${icon('plus', 14)} ${t('add_image')}</button>
+        </div>
         <div class="field" style="grid-column:1/-1"><label>${t('video_url_label')}</label><input class="input" id="np-video" placeholder="https://…"/></div>
       </div>
       <div id="np-error" class="error-text" hidden></div>
@@ -768,6 +795,48 @@ function openBuyModal(productId) {
   document.getElementById('buy-submit').addEventListener('click', () => submitOrder(product));
 }
 function closeBuyModal() { document.getElementById('modal-root').innerHTML = ''; }
+
+let galleryIndex = 0;
+function openGalleryModal(productId) {
+  const product = state.products.find(p => p.id === productId);
+  if (!product) return;
+  const images = getProductImages(product);
+  if (!images.length) return;
+  galleryIndex = 0;
+
+  const root = document.getElementById('modal-root');
+  root.innerHTML = `
+    <div class="overlay" id="gallery-overlay">
+      <div class="modal wide" style="max-width:560px;background:transparent;box-shadow:none;" onclick="event.stopPropagation()">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div class="mono" id="gallery-counter" style="color:#fff;font-size:13px;"></div>
+          <button class="close-btn" data-action="close-gallery" style="color:#fff;">${icon('x', 22)}</button>
+        </div>
+        <div style="position:relative;background:var(--card);border-radius:10px;overflow:hidden;">
+          <img id="gallery-image" src="" alt="${escapeHtml(product.name[state.lang])}" style="width:100%;max-height:70vh;object-fit:contain;display:block;background:var(--paper);"/>
+          ${images.length > 1 ? `
+            <button data-action="gallery-prev" style="position:absolute;top:50%;transform:translateY(-50%);${state.lang === 'ar' ? 'right' : 'left'}:10px;background:rgba(30,42,50,0.6);color:#fff;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;">${icon('chevronLeft', 20)}</button>
+            <button data-action="gallery-next" style="position:absolute;top:50%;transform:translateY(-50%);${state.lang === 'ar' ? 'left' : 'right'}:10px;background:rgba(30,42,50,0.6);color:#fff;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;">${icon('chevronRight', 20)}</button>
+          ` : ''}
+        </div>
+      </div>
+    </div>`;
+
+  function render() {
+    document.getElementById('gallery-image').src = images[galleryIndex];
+    document.getElementById('gallery-counter').textContent = `${galleryIndex + 1} / ${images.length}`;
+  }
+  render();
+
+  document.getElementById('gallery-overlay').addEventListener('click', closeGalleryModal);
+  document.querySelector('#gallery-overlay .modal').addEventListener('click', (e) => e.stopPropagation());
+  document.querySelector('[data-action="close-gallery"]').addEventListener('click', closeGalleryModal);
+  const prevBtn = document.querySelector('[data-action="gallery-prev"]');
+  const nextBtn = document.querySelector('[data-action="gallery-next"]');
+  if (prevBtn) prevBtn.addEventListener('click', () => { galleryIndex = (galleryIndex - 1 + images.length) % images.length; render(); });
+  if (nextBtn) nextBtn.addEventListener('click', () => { galleryIndex = (galleryIndex + 1) % images.length; render(); });
+}
+function closeGalleryModal() { document.getElementById('modal-root').innerHTML = ''; }
 
 function addNoteRow() {
   noteCount += 1;
@@ -863,7 +932,17 @@ function openEditProductModal(id) {
           <div class="field"><label>${t('product_price')}</label><input class="input" id="ep-price" type="number" min="0" value="${p.price}"/></div>
           <div class="field"><label>${t('code_label')}</label><input class="input" id="ep-code" value="${escapeHtml(p.code || '')}"/></div>
           <div class="field"><label>${t('category_label')}</label><input class="input" id="ep-category" value="${escapeHtml(p.category || '')}"/></div>
-          <div class="field"><label>${t('image_url_label')}</label><input class="input" id="ep-image" value="${escapeHtml(p.imageUrl || '')}"/></div>
+          <div class="field" style="grid-column:1/-1">
+            <label>${t('image_url_label')}</label>
+            <div class="notes-list" id="ep-images-list">
+              ${(() => {
+                const imgs = getProductImages(p);
+                const rows = imgs.length ? imgs : [''];
+                return rows.map(url => `<div class="note-row"><input class="input" placeholder="https://…" value="${escapeHtml(url)}"/>${rows.length > 1 ? `<button type="button" class="note-remove" data-action="remove-image-row">${icon('x', 14)}</button>` : ''}</div>`).join('');
+              })()}
+            </div>
+            <button type="button" class="add-note-btn" id="ep-add-image" style="margin-top:8px">${icon('plus', 14)} ${t('add_image')}</button>
+          </div>
           <div class="field" style="grid-column:1/-1"><label>${t('video_url_label')}</label><input class="input" id="ep-video" value="${escapeHtml(p.videoUrl || '')}"/></div>
           <div id="ep-error" class="error-text" style="grid-column:1/-1" hidden></div>
           <button class="brass-btn" id="ep-submit" style="grid-column:1/-1;margin-top:6px">${t('save_changes')}</button>
@@ -874,6 +953,10 @@ function openEditProductModal(id) {
   document.getElementById('edit-overlay').addEventListener('click', closeEditModal);
   document.querySelector('[data-action="close-edit"]').addEventListener('click', closeEditModal);
   document.getElementById('ep-submit').addEventListener('click', () => submitEditProduct(id));
+  document.getElementById('ep-add-image').addEventListener('click', () => addImageRow('ep-images-list'));
+  document.querySelectorAll('#ep-images-list [data-action="remove-image-row"]').forEach(btn => {
+    btn.addEventListener('click', () => btn.closest('.note-row').remove());
+  });
 }
 function closeEditModal() { document.getElementById('modal-root').innerHTML = ''; }
 
@@ -885,7 +968,7 @@ async function submitEditProduct(id) {
   const price = Number(document.getElementById('ep-price').value);
   const code = document.getElementById('ep-code').value.trim();
   const category = document.getElementById('ep-category').value.trim();
-  const imageUrl = document.getElementById('ep-image').value.trim();
+  const imageUrls = Array.from(document.querySelectorAll('#ep-images-list input')).map(i => i.value.trim()).filter(Boolean);
   const videoUrl = document.getElementById('ep-video').value.trim();
   const errEl = document.getElementById('ep-error');
   const btn = document.getElementById('ep-submit');
@@ -895,7 +978,7 @@ async function submitEditProduct(id) {
     errEl.hidden = false;
     return;
   }
-  const updates = { code, category, price, imageUrl, videoUrl, name: { en: nameEn, ar: nameAr }, desc: { en: descEn, ar: descAr } };
+  const updates = { code, category, price, imageUrls, videoUrl, name: { en: nameEn, ar: nameAr }, desc: { en: descEn, ar: descAr } };
 
   btn.disabled = true;
   try {
@@ -1119,7 +1202,7 @@ async function addProductFromForm() {
   const price = Number(document.getElementById('np-price').value);
   const code = document.getElementById('np-code').value.trim();
   const category = document.getElementById('np-category').value.trim();
-  const imageUrl = document.getElementById('np-image').value.trim();
+  const imageUrls = Array.from(document.querySelectorAll('#np-images-list input')).map(i => i.value.trim()).filter(Boolean);
   const videoUrl = document.getElementById('np-video').value.trim();
   const errEl = document.getElementById('np-error');
   const addBtn = document.querySelector('[data-action="add-product"]');
@@ -1129,7 +1212,7 @@ async function addProductFromForm() {
     errEl.hidden = false;
     return;
   }
-  const product = { id: makeId('p'), code, category, price, imageUrl, videoUrl, name: { en: nameEn, ar: nameAr }, desc: { en: descEn, ar: descAr } };
+  const product = { id: makeId('p'), code, category, price, imageUrls, videoUrl, name: { en: nameEn, ar: nameAr }, desc: { en: descEn, ar: descAr } };
 
   if (addBtn) addBtn.disabled = true;
   try {
@@ -1169,12 +1252,22 @@ async function removeProduct(id) {
 function wireProductsTabEvents() {
   const addBtn = document.querySelector('[data-action="add-product"]');
   if (addBtn) addBtn.addEventListener('click', addProductFromForm);
+  const addImageBtn = document.getElementById('np-add-image');
+  if (addImageBtn) addImageBtn.addEventListener('click', () => addImageRow('np-images-list'));
   document.querySelectorAll('[data-action="ask-remove"]').forEach(btn => {
     btn.addEventListener('click', () => askRemoveProduct(btn.dataset.id));
   });
   document.querySelectorAll('[data-action="ask-edit"]').forEach(btn => {
     btn.addEventListener('click', () => openEditProductModal(btn.dataset.id));
   });
+}
+
+function addImageRow(listId) {
+  const row = document.createElement('div');
+  row.className = 'note-row';
+  row.innerHTML = `<input class="input" placeholder="https://…"/><button type="button" class="note-remove" data-action="remove-image-row">${icon('x', 14)}</button>`;
+  document.getElementById(listId).appendChild(row);
+  row.querySelector('[data-action="remove-image-row"]').addEventListener('click', () => row.remove());
 }
 
 /* ---------------------------------------------------------------------
@@ -1212,6 +1305,9 @@ document.addEventListener('click', async (e) => {
       break;
     case 'select-product':
       openBuyModal(el.dataset.id);
+      break;
+    case 'view-gallery':
+      openGalleryModal(el.dataset.id);
       break;
     case 'open-auth':
       openAuthModal('login');

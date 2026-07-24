@@ -33,6 +33,10 @@ const PHONE_PATTERN = /^01[0125]\d{8}$/; // Egyptian mobile: 01 + network digit 
 const EMAILJS_SERVICE_ID = 'service_jxgo1ff';
 const EMAILJS_TEMPLATE_ID = 'template_i3gycwl';
 const EMAILJS_WELCOME_TEMPLATE_ID = 'template_sy1skmi';
+// Order-ready email — create a 3rd template in your EmailJS dashboard (copy the
+// confirmation one, just change the wording to "your order is ready") then
+// paste its Template ID here. Until you do, this feature silently no-ops.
+const EMAILJS_ORDER_DONE_TEMPLATE_ID = 'YOUR_ORDER_DONE_TEMPLATE_ID';
 const EMAILJS_PUBLIC_KEY = 'ap6g28IA9votr2zYS';
 
 let emailjs = null;
@@ -65,6 +69,23 @@ async function sendConfirmationEmail(order, email) {
     });
   } catch (e) {
     console.warn('Could not send confirmation email (order was still placed fine):', e);
+  }
+}
+
+async function sendOrderDoneEmail(order) {
+  const email = order.notifyEmail || order.buyerEmail;
+  if (!emailjsReady || !email || EMAILJS_ORDER_DONE_TEMPLATE_ID === 'YOUR_ORDER_DONE_TEMPLATE_ID') return;
+  try {
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_ORDER_DONE_TEMPLATE_ID, {
+      to_email: email,
+      to_name: order.buyerName || email,
+      ticket_id: order.id,
+      product_name: order.productName,
+      price: formatPrice(order.price),
+      support_phone: SUPPORT_PHONE,
+    });
+  } catch (e) {
+    console.warn('Could not send order-ready email (status was still updated fine):', e);
   }
 }
 
@@ -115,6 +136,7 @@ const ICON_PATHS = {
   image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
   chevronLeft: '<path d="m15 18-6-6 6-6"/>',
   chevronRight: '<path d="m9 18 6-6-6-6"/>',
+  whatsapp: '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>',
 };
 function icon(name, size = 16, extraClass = '') {
   const p = ICON_PATHS[name] || '';
@@ -152,6 +174,9 @@ const STRINGS = {
     undo_ticket: 'Cancel this order', undo_ask: 'Cancel this order?', undo_yes: 'Yes, cancel it', undo_keep: 'Never mind',
     delete_ticket: 'Delete', delete_ask: "Delete this order? This can't be undone.", delete_yes: 'Yes, delete it',
     support_label: 'Need help with this order?', call_support: 'Call support',
+    whatsapp_support: 'WhatsApp us', whatsapp_float_label: 'Chat with us on WhatsApp',
+    whatsapp_prefill: "Hi! I'd like to ask about an order.",
+    out_of_stock: 'Out of stock', in_stock_field: 'In stock',
     guest_label: 'Guest', loading: 'Loading…',
     product_name_en: 'Name (English)', product_name_ar: 'Name (Arabic)',
     product_desc_en: 'Description (English)', product_desc_ar: 'Description (Arabic)',
@@ -201,6 +226,9 @@ const STRINGS = {
     undo_ticket: 'إلغاء الطلب', undo_ask: 'هل تريد إلغاء هذا الطلب؟', undo_yes: 'نعم، ألغِ الطلب', undo_keep: 'تراجع',
     delete_ticket: 'حذف', delete_ask: 'هل تريد حذف هذا الطلب؟ لا يمكن التراجع عن هذا.', delete_yes: 'نعم، احذفه',
     support_label: 'تحتاج مساعدة بخصوص هذا الطلب؟', call_support: 'اتصل بالدعم',
+    whatsapp_support: 'راسلنا واتساب', whatsapp_float_label: 'تواصل معنا عبر واتساب',
+    whatsapp_prefill: 'مرحبًا! عندي سؤال عن طلب.',
+    out_of_stock: 'نفدت الكمية', in_stock_field: 'متوفر بالمخزون',
     guest_label: 'زائر', loading: 'جاري التحميل…',
     product_name_en: 'الاسم (إنجليزي)', product_name_ar: 'الاسم (عربي)',
     product_desc_en: 'الوصف (إنجليزي)', product_desc_ar: 'الوصف (عربي)',
@@ -331,6 +359,13 @@ function makeTicketNo() {
   return `BUY-${tt}${r}`;
 }
 function makeId(prefix) { return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
+function whatsappLink(phone, message = '') {
+  // Egyptian mobile numbers are typed as 01XXXXXXXXX; wa.me needs the
+  // country code instead of the leading 0, e.g. 01226754491 -> 201226754491.
+  const digits = String(phone || '').replace(/\D/g, '').replace(/^0/, '');
+  const intl = digits.startsWith('20') ? digits : `20${digits}`;
+  return `https://wa.me/${intl}${message ? '?text=' + encodeURIComponent(message) : ''}`;
+}
 function isValidEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
 function escapeHtml(str) {
   return String(str || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -483,6 +518,8 @@ function renderMyOrders() {
             ${status === 'done' ? `<div class="support-note">
               ${t('support_label')}<br/>
               <a href="tel:${SUPPORT_PHONE}">${icon('phone', 12)} ${t('call_support')}: ${SUPPORT_PHONE}</a>
+              &nbsp;·&nbsp;
+              <a href="${whatsappLink(SUPPORT_PHONE, t('whatsapp_prefill'))}" target="_blank" rel="noopener noreferrer">${icon('whatsapp', 12)} ${t('whatsapp_support')}</a>
             </div>` : ''}
           </div>
           <div style="padding:0 18px 16px" data-order-delete-zone="${o.id}">
@@ -660,6 +697,7 @@ async function toggleOrderStatus(id, nextStatus) {
     if (o) o.status = nextStatus;
     document.getElementById('admin-tab-content').innerHTML = renderOrdersTab();
     wireOrdersTabEvents();
+    if (nextStatus === 'done' && o) sendOrderDoneEmail(o); // fire-and-forget; doesn't block the status update
   } catch (e) {
     console.error('Could not update order status:', e);
   }
@@ -894,6 +932,7 @@ async function submitOrder(product) {
     phone1, phone2, location, notes, status: 'pending',
     buyerName: state.currentUser ? state.currentUser.name : '',
     buyerEmail: state.currentUser ? state.currentUser.email : '',
+    notifyEmail: email || '', // whatever email they typed in this form, guest or not — used to email them when the order is ready
     timestamp: new Date().toISOString(),
   };
 
